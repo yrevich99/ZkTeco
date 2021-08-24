@@ -1,0 +1,90 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="Quantum Smart" content="Главная страница">
+    <title>{% block title %}{% endblock %}</title>
+    <link href="{% static 'css/bootstrap/bootstrap.min.css' %}" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/quantum.css' %}">
+  </head>
+<body class="header-fixed header-tablet-and-mobile-fixed toolbar-enabled aside-fixed aside-default-enabled">
+
+<header>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark ">
+    <!-- Images icon -->
+        <a class="navbar-brand" href="#">
+          <img src="{% static 'images/photo_2020-05-04_19-13-22.png' %}" alt="" width="40" height="30">
+        </a>
+    <!-- Navbar -->
+        <div class="container-fluid">
+          <a class="navbar-brand" href="/">Quantum Smart</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="#">Сотрудники</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Отделы</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Графики</a>
+              </li>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" href="device_list">Устройства</a>
+                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <li><a class="dropdown-item" href="add_device">Добавить устройство</a></li>
+                  <li><a class="dropdown-item" href="device_list">Добавленные устройства</a></li>
+                  <li><a class="dropdown-item" href="search_device">Поиск устройств</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item" href="#">Уровень доступа</a></li>
+                </ul>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Отчеты</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Мониторинг</a>
+              </li>
+            </ul>
+            <form class="d-flex">
+              <input class="form-control me-2" type="search" placeholder="Поиск" aria-label="Search">
+              <button class="btn btn-outline-success" type="submit">Поиск</button>
+            </form>
+          </div>
+        </div>
+      </nav>
+</header>
+
+<aside></aside>
+
+<main>
+  <section>
+    <div class="content">{% block content %}{% endblock %}</div>
+  </section>
+</main>
+
+
+
+
+
+
+
+
+
+
+
+
+<footer>{% block footer %}
+
+{% endblock %}</footer>
+
+  <script src="{% static 'js/bootstrap/bootstrap.bundle.min.js' %}" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
+  <script src="{% static 'js/quantum.js' %}"></script>
+</body>
+</html>

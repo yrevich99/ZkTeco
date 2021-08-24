@@ -1,0 +1,48 @@
+{% extends 'skud/base.html' %}
+
+{% block title %}
+  Поиск устройств
+{% endblock %}
+
+{% block content %}
+  
+<table class="table table-bordered table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">Номер</th>
+      <th scope="col">Mac</th>
+      <th scope="col">IP адресс</th>
+      <th scope="col">Серийный номер</th>
+      <th scope="col">Девайс</th>
+      <th scope="col">Устройство добавлено</th>
+    </tr>
+  </thead>
+    
+    {% if device_counts %}
+        <tbody> 
+          <tr>
+            {% for value in results %}<td>{{value}}</td>{% endfor %}
+          </tr>
+        </tbody>
+    {% else %}
+    <tbody> 
+      <tr>
+        <td> Не найдено ни одного устройства </td>
+      </tr>
+    </tbody>
+        
+    {% endif %}
+      <!-- Добавлено да или нет и поменять ip и добавить -->
+    
+  </table>
+{% endblock %}
+
+
+
+
+{% block footer %}
+  {% if device_counts %}
+  <p>Найдено устройств - {{ device_counts }}</p>
+  {% endif %}
+{% endblock %}
+  
