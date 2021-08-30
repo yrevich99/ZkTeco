@@ -1,11 +1,12 @@
+from django import http
 from django.shortcuts import render
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.core.paginator import Paginator
 from pyzkaccess.exceptions import ZKSDKError
-from .models import Device
+from .models import Devices
 from pyzkaccess import ZKAccess, ZK200, ZKSDK
-from .forms import DeviceForm
+from .forms import AddDeviceForm
 from datetime import datetime
 # Create your views here.
 
@@ -15,7 +16,9 @@ def user_list(request):
 
 
 def device_list(request):
-    return render(request, 'skud/views/all_device.html')
+    devices = Devices.objects.all()
+
+    return render(request, 'skud/views/all_device.html', {'devices': devices})
 
 
 def add_device(request):
@@ -28,15 +31,15 @@ def add_device(request):
                 zk.parameters.datetime = datetime.now()
                 device_type = zk.parameters.device_model
                 device_serial = zk.parameters.serial_number
+                print(zk)
                 
-                
-
-            add_device = Device()
+            add_device = Devices()
             add_device.device_name = request.POST['device_name']
             add_device.device_ip = request.POST['device_ip']
             add_device.device_port = request.POST['device_port']
             add_device.main_door = 'Да'
             add_device.device_add = 'Да'
+            # add_device.device_mac = 
             # add_device.device_type = device_type
             add_device.serial_number = device_serial
 
@@ -44,13 +47,20 @@ def add_device(request):
             
         except ZKSDKError as err:
             print(err)
-            return HttpResponse("Возникла ошибка соединения")
+            return HttpResponse("Ошибка соединения")
         except Exception as err:
             print(err)
             return HttpResponse("Возникла ошибка")          
         
     return render(request, 'skud/views/add_device.html')
 
+def delete_device(request, device_ip):
+    try:
+        device = get_object_or_404(Devices, device_ip=device_ip).delete()
+    except Exception as err:
+        print(err)
+        return HttpResponse('Error')
+    return HttpResponseRedirect('/device_list')
 
 def search_device(request):
     results = []

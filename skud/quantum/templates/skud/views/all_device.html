@@ -14,5 +14,24 @@
         <th scope="col">Главная дверь</th>
       </tr>
     </thead>
+
+    {% for device in devices %}
+        <tbody>
+          <tr>
+            <td></td>
+            <td>{{device.device_name}}</td>
+            <td>{{device.device_mac}}</td>
+            <td>{{device.device_ip}}</td>
+            <td>{{device.serial_number}}</td>
+            <td>{{device.device_type}}</td>
+            <td>{{device.main_door}}</td>
+            <td class="btn-lg ">
+            <a href="add_device"><i class="btn-lg bi bi-pencil-square btn-outline-secondary" title="Редактировать"></i></a>
+            <a href="#"><i class="btn-lg bi bi-stopwatch btn-outline-secondary" title="Установить время"></i></a>
+            <a href="delete_device/{{device.device_ip}}"><i class="btn-lg bi bi-trash btn-outline-secondary" title="Удалить устройство"></i></a>
+            </td>
+          </tr>
+        </tbody>
+    {% endfor %}
 </table>
 {% endblock %}
