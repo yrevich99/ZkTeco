@@ -5,23 +5,23 @@
         {% csrf_token %}
         <div class="input-group mb-3">
             <span class="input-group-text" id="inputGroup-sizing-default">Наименование девайса</span>
-            <input type="text" class="form-control" name="device_name" required>
+            <input type="text" class="form-control" name="device_name" required value="{{device.device_name}}">
           </div>
           <div class="input-group mb-3">
             <span class="input-group-text" id="inputGroup-sizing-default">IP-adress</span>
-            <input type="text" name="device_ip" class="form-control" placeholder="192.168.168.168" pattern="\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}" required>
+            <input type="text" name="device_ip" class="form-control" placeholder="192.168.168.168" pattern="\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}" required value="{{device.device_ip}}">
             <button class="btn btn-outline-secondary" type="button" id="connect">Соединение</button>
           </div>
           <div class="input-group mb-3">
             <span class="input-group-text" id="inputGroup-sizing-default">Порт</span>
-            <input type="text" name="device_port" class="form-control" placeholder="4370" pattern="[0-9]{4,6}" value="4370">
+            <input type="text" name="device_port" class="form-control" placeholder="4370" pattern="[0-9]{4,6}" value="{{device.device_port}}">
           </div>
           <div class="form-check form-switch mb-3">
-            <input class="form-check-input" name="main_door" type="checkbox" checked='true'>
+            <input class="form-check-input" name="main_door" type="checkbox" id="main_door">
             <label class="form-check-label">Главная дверь</label>
           </div>
           <div class="form-check form-switch mb-3" >
-            <input class="form-check-input" name="device_clear" type="checkbox">
+            <input class="form-check-input" id="device_clear" name="device_clear" type="checkbox">
             <label class="form-check-label">Очистить устройство</label>
           </div>
 

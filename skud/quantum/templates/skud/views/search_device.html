@@ -15,14 +15,28 @@
       <th scope="col">Серийный номер</th>
       <th scope="col">Девайс</th>
       <th scope="col">Устройство добавлено</th>
+      <th scope="col">Добавить / Изменить IP</th>
     </tr>
   </thead>
     
     {% if device_counts %}
         <tbody> 
+          {% for value in results %}
           <tr>
-            {% for value in results %}<td>{{value}}</td>{% endfor %}
+              {% for key, value in value.items %}
+              <td>{{value}}</td>
+              {% endfor %}
+            <td>
+              <a href="#"><i class="btn-lg bi bi-plus-square btn-outline-secondary" title="Добавить"></i></a>
+              <a href="#"><i class="btn-lg bi bi-pencil-square btn-outline-secondary" title="Редактировать IP"></i></a>
+            </td>
           </tr>
+          {% endfor %}
+          {% if device_counts %}
+            <tr>
+              <td>Найдено устройств: {{ device_counts }}</td>
+            </tr>
+          {% endif %}
         </tbody>
     {% else %}
     <tbody> 
@@ -30,19 +44,8 @@
         <td> Не найдено ни одного устройства </td>
       </tr>
     </tbody>
-        
     {% endif %}
       <!-- Добавлено да или нет и поменять ip и добавить -->
-    
   </table>
-{% endblock %}
-
-
-
-
-{% block footer %}
-  {% if device_counts %}
-  <p>Найдено устройств - {{ device_counts }}</p>
-  {% endif %}
 {% endblock %}
   

@@ -12,3 +12,12 @@ class Devices(models.Model):
     device_add = models.CharField(max_length=5, blank=False)
     main_door = models.CharField(max_length = 15, blank=False)
     device_port = models.CharField(max_length = 10,  blank=False)
+
+class Door_setting(models.Model):
+    door_number = models.IntegerField()
+    name_door = models.CharField(max_length=250, unique=True)
+    device_name = models.CharField(max_length=250)
+    driver_time = models.IntegerField()
+    detector_time = models.IntegerField()
+    inter_time = models.IntegerField()
+    sensor_type = models.CharField(max_length=250)
