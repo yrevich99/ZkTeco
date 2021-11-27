@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'quantum.apps.QuantumConfig',
     'django.contrib.postgres',
-    
+    'mptt',
 ]
 
 MIDDLEWARE = [

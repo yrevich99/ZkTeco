@@ -1,7 +1,24 @@
 {% extends 'skud/base.html' %}
 
+{% block title %}
+  Список устройств
+{% endblock %}
+
+{% block saidbar %}
+<li>
+  <a href="/device_list" class="nav-link active">
+    Устройства
+  </a>
+</li>
+<li>
+  <a href="/search_devices_list" class="nav-link text-white">
+    Поиск устройств
+  </a>
+</li>
+{% endblock %}
 
 {% block content %}
+<a class="btn btn-primary" href="/add_device" role="button">Добавить устройство</a>
 <table class="table table-bordered table-striped table-hover">
     <thead>
       <tr>
@@ -25,7 +42,7 @@
             <td>{{device.serial_number}}</td>
             <td>{{device.device_type}}</td>
             <td>{{device.main_door}}</td>
-            <td class="btn-lg ">
+            <td class="btn-lg">
             <a href="/edit_device/{{device.id}}"><i class="btn-lg bi bi-pencil-square btn-outline-secondary" title="Редактировать"></i></a>
             <a href="/device_list/{{device.id}}"><i class="btn-lg bi bi-stopwatch btn-outline-secondary" title="Установить время"></i></a>
             <a href="/delete_device/{{device.device_ip}}"><i class="btn-lg bi bi-trash btn-outline-secondary" title="Удалить устройство"></i></a>

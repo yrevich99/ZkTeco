@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models.expressions import F
+from mptt.models import MPTTModel, TreeForeignKey
 
 # Create your models here.
 
@@ -21,3 +22,10 @@ class Door_setting(models.Model):
     detector_time = models.IntegerField()
     inter_time = models.IntegerField()
     sensor_type = models.CharField(max_length=250)
+
+
+class Department(MPTTModel):
+    name = models.CharField(max_length=64, unique=True)
+    parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
+    class MPTTModel:
+        order_insertion_by = ['name']

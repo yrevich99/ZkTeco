@@ -1,0 +1,34 @@
+{% extends 'skud/base.html' %}
+
+{% block title %}
+    Отделы
+{% endblock %}
+
+{%block saidbar%}
+    <li class="nav-item">
+        <a href="/users" class="nav-link text-white" aria-current="page">
+        Сотрудники
+        </a>
+    </li>
+    <li>
+        <a href="/create_department" class="nav-link active">
+        Отделы
+        </a>
+    </li>
+{% endblock %}
+
+{% block content %}
+    {% load mptt_tags %}
+    <ol class="list-group list-group-numbered">
+        {% recursetree department  %}
+            <li class="list-group-item">
+                {{ node.name }}
+                {% if not node.is_leaf_node %}
+                    <ol class="children list-group list-group-numbered">
+                        {{ children }}
+                    </ol>
+                {% endif %}
+            </li>
+        {% endrecursetree %}
+    </ol>
+{% endblock %}

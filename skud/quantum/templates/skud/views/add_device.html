@@ -1,5 +1,22 @@
 {% extends 'skud/base.html' %}
 
+{% block title %}
+  Добавить устройство
+{% endblock %}
+
+{% block saidbar %}
+<li>
+  <a href="/device_list" class="nav-link text-white">
+    Устройства
+  </a>
+</li>
+<li>
+  <a href="/search_devices_list" class="nav-link text-white">
+    Поиск устройств
+  </a>
+</li>
+{% endblock %}
+
 {% block content %}
     <form method="POST" >
         {% csrf_token %}

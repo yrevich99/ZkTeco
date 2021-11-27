@@ -28,26 +28,15 @@
           <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
               <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="#">Сотрудники</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">Отделы</a>
+                <a class="nav-link active" aria-current="page" href="/users">Сотрудники</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="#">Графики</a>
               </li>
-              <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" href="device_list">Устройства</a>
-                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                  
-                  <li><a class="dropdown-item" href="/add_device">Добавить устройство</a></li>
-                  <li><a class="dropdown-item" href="/device_list">Добавленные устройства</a></li>
-                  <li><a class="dropdown-item" href="/search_devices_list">Поиск устройств</a></li>
-                  <!-- <li><hr class="dropdown-divider"></li> -->
-                  <!-- <li><a class="dropdown-item" href="#">Уровень доступа</a></li>
-                  <li><a class="dropdown-item" href="#">Настройки двери</a></li> -->
-                </ul>
+              <li class="nav-item">
+                <a class="nav-link" href="/device_list">Устройства</a>
               </li>
+              
               <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" href="#">Контроль доступа</a>
                 <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
@@ -71,13 +60,30 @@
       </nav>
 </header>
 
-<aside></aside>
-
 <main>
-  <section>
-    <div class="content">{% block content %}{% endblock %}</div>
-  </section>
+  <div class="d-flex flex-row bd-highlight mb-3">
+      <div class="bd-highlight" style="padding-top: 10px;">
+          <section>
+            <div class="d-flex flex-column flex-shrink-0 p-3 text-white bg-dark" style="width: 280px; height: 100vh;">
+              <hr>
+              <ul class="nav nav-pills flex-column mb-auto">
+                {%block saidbar%}{% endblock %}
+              </ul>
+              <hr>
+            </div>
+          </section>
+      </div>
+      <div class="p-10 bd-highlight" style="width: 100%; padding: 10px;">
+          <div class="content">{% block content %}{% endblock %}</div>
+      </div>
+  </div>
 </main>
+
+
+
+
+
+
 
 <footer>{% block footer %}{% endblock %}</footer>
 

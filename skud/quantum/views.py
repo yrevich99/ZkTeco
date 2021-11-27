@@ -3,14 +3,14 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.core.paginator import Paginator
 from pyzkaccess.exceptions import ZKSDKError
-from .models import Devices, Door_setting
+from .models import Devices, Door_setting, Department
 from pyzkaccess import ZKAccess, ZK200, ZKSDK, device, door
 from .forms import AddDeviceForm
 from datetime import datetime
 # Create your views here.
 
 def user_list(request):
-    return render(request, 'skud/base.html')
+    return render(request, 'skud/views/users.html')
 
 def device_list(request):
     devices = Devices.objects.all()
@@ -31,8 +31,10 @@ def search_device_list(request):
                                                             })
 
 def door_setting_list(request):
-    doors = Door_setting.objects.all()
-    return render(request, 'skud/views/door_setting.html', {'doors': doors})
+    return render(request, 'skud/views/door_setting.html', {'doors': Door_setting.objects.all()})
+
+def department_list(request):
+    return render(request, 'skud/views/department.html', {'department':Department.objects.all()})
 
 def add_device(request):
     form = AddDeviceForm(request.POST)
