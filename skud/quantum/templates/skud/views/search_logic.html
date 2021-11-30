@@ -1,0 +1,28 @@
+{% if device_counts %}
+<tbody> 
+    {% for value in results %}
+    <tr>
+        {% for key, value in value.items %}
+        <td>{{value}}</td>
+        {% endfor %}
+        <td>
+        <a href="#"><i class="btn-lg bi bi-plus-square btn-outline-secondary" title="Добавить"></i></a>
+        <a href="#"><i class="btn-lg bi bi-pencil-square btn-outline-secondary" title="Редактировать IP"></i></a>
+        </td>
+    </tr>
+    {% endfor %}
+    {% if device_counts %}
+        <tr>
+            <td colspan="7" class="text-center bg-success text-white">Найдено устройств: {{ device_counts }}</td>
+        </tr>
+    {% endif %}
+    </tbody>
+{% else %}
+<tbody> 
+<tr>
+    <td colspan="7" class="text-center bg-warning"> Не найдено ни одного устройства </td>
+</tr>
+</tbody>
+{% endif %}
+<!-- Добавлено да или нет и поменять ip и добавить -->
+</table>

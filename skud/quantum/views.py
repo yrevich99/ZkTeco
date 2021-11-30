@@ -1,11 +1,13 @@
+from typing import Dict
 from django import http
+from django.template.loader import render_to_string
 from django.shortcuts import redirect, render, get_object_or_404
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.core.paginator import Paginator
 from pyzkaccess.exceptions import ZKSDKError
 from .models import Devices, Door_setting, Department
 from pyzkaccess import ZKAccess, ZK200, ZKSDK, device, door
-from .forms import AddDeviceForm
+from .forms import AddDeviceForm, DepartmentForm
 from datetime import datetime
 # Create your views here.
 
@@ -34,7 +36,7 @@ def door_setting_list(request):
     return render(request, 'skud/views/door_setting.html', {'doors': Door_setting.objects.all()})
 
 def department_list(request):
-    return render(request, 'skud/views/department.html', {'department':Department.objects.all()})
+    return render(request, 'skud/views/department_list.html', {'department':Department.objects.all()})
 
 def add_device(request):
     form = AddDeviceForm(request.POST)
@@ -207,3 +209,22 @@ def door_setting_get(ip,port,parametrs):
     except Exception as err:
         return err
     
+def department_create(request):
+    data = dict()
+    if request.method == 'POST':
+        form = DepartmentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            data['form_is_valid'] = True
+            return HttpResponseRedirect('/department_list')
+        else:
+            data['form_is_valid'] = False
+    else:
+        form = DepartmentForm()
+
+    context = {'form': form}
+    data['html_form'] = render_to_string('skud/views/add_department.html',
+        context,
+        request=request,
+    )
+    return JsonResponse(data)

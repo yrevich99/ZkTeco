@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'quantum.apps.QuantumConfig',
     'django.contrib.postgres',
     'mptt',
+    'widget_tweaks',
 ]
 
 MIDDLEWARE = [

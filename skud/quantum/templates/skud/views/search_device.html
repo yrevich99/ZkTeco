@@ -32,33 +32,6 @@
     </tr>
   </thead>
     
-    {% if device_counts %}
-        <tbody> 
-          {% for value in results %}
-          <tr>
-              {% for key, value in value.items %}
-              <td>{{value}}</td>
-              {% endfor %}
-            <td>
-              <a href="#"><i class="btn-lg bi bi-plus-square btn-outline-secondary" title="Добавить"></i></a>
-              <a href="#"><i class="btn-lg bi bi-pencil-square btn-outline-secondary" title="Редактировать IP"></i></a>
-            </td>
-          </tr>
-          {% endfor %}
-          {% if device_counts %}
-            <tr>
-              <td>Найдено устройств: {{ device_counts }}</td>
-            </tr>
-          {% endif %}
-        </tbody>
-    {% else %}
-    <tbody> 
-      <tr>
-        <td> Не найдено ни одного устройства </td>
-      </tr>
-    </tbody>
-    {% endif %}
-      <!-- Добавлено да или нет и поменять ip и добавить -->
-  </table>
+    {% include 'skud/views/search_logic.html' %}
 {% endblock %}
   

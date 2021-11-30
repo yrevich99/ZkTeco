@@ -13,6 +13,6 @@ urlpatterns = [
     path('device_list/<int:id>', views.current_time, name='current_time'),
     path('access_control',views.access_control),
     path('door_settings', views.door_setting_list),
-    path('create_department', views.department_list, name='department_list')
-    
+    path('department_list', views.department_list, name='department_list'),
+    path('department_list/create/', views.department_create, name='department_create'),    
 ]
