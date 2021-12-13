@@ -29,3 +29,8 @@ class Department(MPTTModel):
     parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
     class MPTTModel:
         order_insertion_by = ['name']
+
+class Access_control(models.Model):
+    access_name = models.CharField(max_length=250, unique=True, blank=False)
+    lock_control = models.CharField(max_length=250, blank=False)
+    time_zone = models.CharField(max_length=250, blank=False)

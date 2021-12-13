@@ -12,7 +12,11 @@ from datetime import datetime
 # Create your views here.
 
 def user_list(request):
-    return render(request, 'skud/views/users.html')
+    return render(request, 'skud/views/users_list.html')
+
+
+def user_create(request):
+    return render(request, 'skud/views/user_create.html')
 
 def device_list(request):
     devices = Devices.objects.all()
@@ -35,8 +39,6 @@ def search_device_list(request):
 def door_setting_list(request):
     return render(request, 'skud/views/door_setting.html', {'doors': Door_setting.objects.all()})
 
-def department_list(request):
-    return render(request, 'skud/views/department_list.html', {'department':Department.objects.all()})
 
 def add_device(request):
     form = AddDeviceForm(request.POST)
@@ -209,22 +211,67 @@ def door_setting_get(ip,port,parametrs):
     except Exception as err:
         return err
     
-def department_create(request):
+# Отдел -----------------------------------------------------------
+def department_list(request):
+    return render(request, 'skud/views/department/department_list.html', {'department':Department.objects.all()})
+
+
+
+def save_department_form(request, form, template_name):
     data = dict()
     if request.method == 'POST':
-        form = DepartmentForm(request.POST)
         if form.is_valid():
             form.save()
             data['form_is_valid'] = True
-            return HttpResponseRedirect('/department_list')
+            department = Department.objects.all()
+            data['html_department_list'] = render_to_string('skud/views/department/department_list.html', {
+                'department': department
+            })
         else:
             data['form_is_valid'] = False
-    else:
-        form = DepartmentForm()
-
+    
     context = {'form': form}
-    data['html_form'] = render_to_string('skud/views/add_department.html',
+    data['html_form'] = render_to_string(template_name,
         context,
         request=request,
     )
     return JsonResponse(data)
+
+
+def department_create(request):
+    if request.method == 'POST':
+        form = DepartmentForm(request.POST)
+    else:
+        form = DepartmentForm()
+    return save_department_form(request, form, 'skud/views/department/add_department.html')
+
+
+def department_update(request, pk):
+    department = get_object_or_404(Department, pk=pk)
+    if request.method == 'POST':
+        form = DepartmentForm(request.POST, instance=department)
+    else:
+        form = DepartmentForm(instance=department)
+    return save_department_form(request, form, 'skud/views/department/department_update.html')
+
+
+def department_delete(request, pk):
+    department = get_object_or_404(Department, pk=pk)
+    data = dict()
+    if request.method == 'POST':
+        department.delete()
+        data['form_is_valid'] = True
+        # data['html_department_list'] = render_to_string('skud/views/department/department_list.html',
+        # {'departments': Department.objects.all()}
+        # )
+    else:
+        context = {'department':department}
+        data['html_form'] = render_to_string('skud/views/department/department_delete.html',
+            context,
+            request=request,
+        )
+    return JsonResponse(data)
+# --------------------------------------------------------------------------------
+
+def access_control(request):
+    return render(request, 'skud/views/access_control.html')

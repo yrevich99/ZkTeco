@@ -1,0 +1,60 @@
+{% extends 'skud/base.html' %}
+
+{% block title %}
+    Отделы
+{% endblock %}
+
+{%block saidbar%}
+    <li class="nav-item">
+        <a href="/users_list" class="nav-link text-white" aria-current="page">
+        Сотрудники
+        </a>
+    </li>
+    <li>
+        <a href="/department_list" class="nav-link active">
+        Отделы
+        </a>
+    </li>
+{% endblock %}
+
+{% block content %}
+    <p>
+        <button type="button" class="btn btn-primary js-create-department"
+        data-url="{% url 'quantum:department_create' %}">
+        <span class="glyphicon glyphicon-plus"></span>
+        Добавить отдел
+        </button>
+    </p>
+    <div class="treeview w-20 border">
+    {% load mptt_tags %}
+    <ol class="list-group list-group-numbered" id="department-table">
+        {% recursetree department %}
+            <li class="list-group-item">
+                {{ node.name }}
+                <button type="button"
+                    class="btn btn-warning btn-sm js-update-department"
+                    data-url="{% url 'quantum:department_update' node.id %}">
+                <span class="glyphicon glyphicon-pencil"></span> Изменить
+                </button>
+                <button type="button"
+                    class="btn btn-danger btn-sm js-delete-department"
+                    data-url="{% url 'quantum:department_delete' node.id %}">
+                <span class="glyphicon glyphicon-trash"></span> Удалить
+                </button>
+                {% if not node.is_leaf_node %}
+                    <ol class="children list-group list-group-numbered">
+                        {{ children }}
+                    </ol>
+                {% endif %}
+            </li>
+        {% endrecursetree %}
+    </ol>
+    </div>
+
+    <div class="modal fade" id="modal-department">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            </div>
+        </div>
+    </div>
+{% endblock %}

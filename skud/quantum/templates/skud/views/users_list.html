@@ -6,7 +6,7 @@
 
 {%block saidbar%}
     <li class="nav-item">
-        <a href="/users" class="nav-link active" aria-current="page">
+        <a href="/users_list" class="nav-link active" aria-current="page">
         Сотрудники
         </a>
     </li>
@@ -15,4 +15,13 @@
         Отделы
         </a>
     </li>
+{% endblock %}
+
+{% block content %}
+<p>
+    <a href='/users_list/user_create' type="button" class="btn btn-primary">
+    <span class="glyphicon glyphicon-plus"></span>
+    Добавить
+    </a>
+</p>
 {% endblock %}
