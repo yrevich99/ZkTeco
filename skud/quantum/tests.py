@@ -5,11 +5,11 @@ from pyzkaccess.exceptions import ZKSDKError
 from ctypes import *
 # from models import Device
 # Create your views here.
-from .models import Department
-rock = Department.objects.create(name="Rock")
-blues = Department.objects.create(name="Blues")
-Department.objects.create(name="Hard Rock", parent=rock)
-Department.objects.create(name="Pop Rock", parent=rock)
+# from .models import Department
+# rock = Department.objects.create(name="Rock")
+# blues = Department.objects.create(name="Blues")
+# Department.objects.create(name="Hard Rock", parent=rock)
+# Department.objects.create(name="Pop Rock", parent=rock)
 
 
 # found = ZKSDK('plcommpro.dll').search_device('255.255.255.255',4096)
@@ -117,3 +117,14 @@ Department.objects.create(name="Pop Rock", parent=rock)
 #             result[key] = val
 
 # print(result)
+
+
+dicts = {'Device': 3, 'Девайс 2': 1}
+strings = ""
+
+for key, value in dicts.items():
+    if strings == '':
+        strings = f'{key}.{value}'
+    else:
+        strings += f';{key}.{value}'
+print(strings)

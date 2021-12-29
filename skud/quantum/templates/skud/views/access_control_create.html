@@ -1,0 +1,73 @@
+{% extends 'skud/base.html' %}
+
+{% block title %}
+    Создать доступ
+{% endblock %}
+
+{% block saidbar %}
+<li>
+    <a class="nav-link active" href="/access_control">Уровень доступа</a></li>
+</li>
+<li>
+    <a href="/door_settings" class="nav-link text-white">
+    Настройки дверей
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<form method="POST">
+    {% csrf_token %}
+    <div class="input-group mb-3">
+        <span class="input-group-text" id="inputGroup-sizing-default">Название</span>
+        <input type="text" class="form-control" name="access_name" required value="">
+
+        <label class="input-group-text" for="inputGroupSelect01">Область</label>
+            <select class="form-select" name="time_zone" id="inputGroupSelect01" required>
+            <!-- <option selected>Выберите Область</option> -->
+            <option value="24-Hour-Accessible" >24-Hour-Accessible</option>
+        </select>
+
+    </div>
+
+    <div class="overflow-hidden">
+        <div class="row">
+            <div class="col" >
+                <div class="p-3 border bg-light">
+                    <div class="list-group" id="table1">
+                        {% for door in doors %}
+                        <label class="list-group-item" >
+                            <input class="form-check-input mr-1" type="checkbox" id="{{door.name_door}}" name='first_table' value="{{door.device_name}}|||{{door.door_number}}">
+                            {{door.name_door}}|{{door.device_name}}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-auto align-self-center">
+                <div class="mb-3">
+                    <button type="button" class="btn btn-outline-danger" id="right">
+                    <i class="bi bi-arrow-bar-right"></i>
+                </button>
+                </div>
+
+                <div class="mt-3">
+                    <button type="button" class="btn btn-outline-danger" id="left">
+                    <i class="bi bi-arrow-bar-left"></i>
+                </button>
+                </div>
+            </div>
+            
+            <div class="col">
+                    <div class="p-3 border bg-light" >
+                        <div class="list-group" id="table2">
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3" value='Save'>Создать доступ</button>
+</form>
+{% endblock %}
+

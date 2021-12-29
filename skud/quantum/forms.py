@@ -12,3 +12,11 @@ class DepartmentForm(forms.ModelForm):
     class Meta:
         model = Department
         fields = ('name', 'parent')
+
+class CreateAccess(forms.Form):
+    access_name = forms.CharField(max_length=150)
+    lock_control = forms.CharField(max_length = 150)
+    time_zone = forms.CharField(max_length = 150)
+    
+    
+    

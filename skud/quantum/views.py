@@ -5,23 +5,41 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.core.paginator import Paginator
 from pyzkaccess.exceptions import ZKSDKError
-from .models import Devices, Door_setting, Department
+from .models import Devices, Door_setting, Department, Access_control
 from pyzkaccess import ZKAccess, ZK200, ZKSDK, device, door
-from .forms import AddDeviceForm, DepartmentForm
+from .forms import AddDeviceForm, DepartmentForm, CreateAccess
 from datetime import datetime
+import json
 # Create your views here.
 
+#Пользователь---------------------------------------------------------------
 def user_list(request):
     return render(request, 'skud/views/users_list.html')
 
-
 def user_create(request):
     return render(request, 'skud/views/user_create.html')
+#-------------------------------------------------------------------------------------
 
-def device_list(request):
-    devices = Devices.objects.all()
-    counts_device = 1
-    return render(request, 'skud/views/all_device.html', {'devices': devices, 'counts_device':counts_device})
+#Двери-------------------------------------------------------------------------------------
+def door_setting_list(request):
+    return render(request, 'skud/views/door_setting.html', {'doors': Door_setting.objects.all()})
+
+def door_setting_get(ip,port,parametrs):
+    try:
+        conn = f"protocol=TCP,ipaddress={ip},port={port},timeout=4000,passwd="
+        params = parametrs.split(',')
+        connects = ZKSDK('plcommpro.dll')
+        connects.connect(conn)
+        door_get = connects.get_device_param(params,2048)
+        connects.disconnect()
+        return door_get
+    except Exception as err:
+        return err
+#-------------------------------------------------------------------------------------------------------
+
+#Устройства----------------------------------------------------------------------------
+def search_list(request):
+    return render(request, 'skud/views/search_device.html')
 
 def search_device_list(request):
     search = search_devices()
@@ -36,9 +54,10 @@ def search_device_list(request):
                                                             'device_counts': device_counts,
                                                             })
 
-def door_setting_list(request):
-    return render(request, 'skud/views/door_setting.html', {'doors': Door_setting.objects.all()})
-
+def device_list(request):
+    devices = Devices.objects.all()
+    counts_device = 1
+    return render(request, 'skud/views/all_device.html', {'devices': devices, 'counts_device':counts_device})
 
 def add_device(request):
     form = AddDeviceForm(request.POST)
@@ -194,28 +213,11 @@ def current_time(request, id):
     
     # return render_to_response('skud/views/all_device.html', message='Время установлено успешно')
     return HttpResponseRedirect('/device_list')
-        
-    
-def access_control(request):
-    pass
+#---------------------------------------------------------------------
 
-def door_setting_get(ip,port,parametrs):
-    try:
-        conn = f"protocol=TCP,ipaddress={ip},port={port},timeout=4000,passwd="
-        params = parametrs.split(',')
-        connects = ZKSDK('plcommpro.dll')
-        connects.connect(conn)
-        door_get = connects.get_device_param(params,2048)
-        connects.disconnect()
-        return door_get
-    except Exception as err:
-        return err
-    
-# Отдел -----------------------------------------------------------
+#Отдел-----------------------------------------------------------
 def department_list(request):
     return render(request, 'skud/views/department/department_list.html', {'department':Department.objects.all()})
-
-
 
 def save_department_form(request, form, template_name):
     data = dict()
@@ -237,14 +239,12 @@ def save_department_form(request, form, template_name):
     )
     return JsonResponse(data)
 
-
 def department_create(request):
     if request.method == 'POST':
         form = DepartmentForm(request.POST)
     else:
         form = DepartmentForm()
     return save_department_form(request, form, 'skud/views/department/add_department.html')
-
 
 def department_update(request, pk):
     department = get_object_or_404(Department, pk=pk)
@@ -253,7 +253,6 @@ def department_update(request, pk):
     else:
         form = DepartmentForm(instance=department)
     return save_department_form(request, form, 'skud/views/department/department_update.html')
-
 
 def department_delete(request, pk):
     department = get_object_or_404(Department, pk=pk)
@@ -271,7 +270,60 @@ def department_delete(request, pk):
             request=request,
         )
     return JsonResponse(data)
-# --------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------
 
+#Доступ-----------------------------------------------------------------------------------
 def access_control(request):
-    return render(request, 'skud/views/access_control.html')
+    return render(request, 'skud/views/access_control.html', {'access_control':Access_control.objects.all()})
+
+def access_delete(request,access_name):
+    access = get_object_or_404(Access_control, access_name=access_name).delete()
+    return  HttpResponseRedirect('/access_control')
+
+def access_create(request):
+    form = CreateAccess(request.POST)
+    
+    if request.method == 'POST':
+        try:
+            if form.is_valid():
+                lock_list = request.POST.getlist('lock_control')
+                lock_dict = {}
+                strings = ''
+
+                for value in lock_list:
+                    lock_split = value.split('|||')
+                    if lock_split[0] not in lock_dict.keys():
+                        lock_dict[lock_split[0]] = []
+                        lock_dict[lock_split[0]].append(lock_split[1])
+                    elif lock_split[0] in lock_dict.keys():
+                        lock_dict[lock_split[0]].append(lock_split[1])
+
+                for key, value in lock_dict.items():
+                    dec = [0,0,0,0]
+                    for val in value:
+                        if val == '1':
+                            dec[3] = 1
+                        elif val == '2':
+                            dec[2] = 1
+                        elif val == '3':
+                            dec[1] = 1
+                        elif val == '4':
+                            dec[0] = 1
+                    decoding  = int(f"{dec[0]}{dec[1]}{dec[2]}{dec[3]}",2)
+                    lock_dict[key] = decoding
+                    if strings == '':
+                        strings = f'{key}.{decoding}'
+                    else:
+                        strings += f';{key}.{decoding}'
+
+                access = Access_control()
+                access.access_name = request.POST['access_name']
+                access.lock_control = strings
+                access.time_zone = request.POST['time_zone']
+                access.save()
+                
+                return HttpResponseRedirect('/access_control')
+        except Exception as err:
+            print(err)
+    return render(request, 'skud/views/access_control_create.html', {'doors': Door_setting.objects.all()})
+#----------------------------------------------------------------------------------------------------
