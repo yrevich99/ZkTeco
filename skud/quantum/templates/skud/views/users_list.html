@@ -23,6 +23,10 @@
     <span class="glyphicon glyphicon-plus"></span>
     Добавить
     </a>
+    <a href='/users_list/user_create' type="button" class="btn btn-primary">
+        <span class="glyphicon glyphicon-plus"></span>
+        Фильтр по отделам
+    </a>
 </p>
 
 <table class="table table-bordered table-striped table-hover ">
@@ -37,20 +41,24 @@
         </tr>
     </thead>
 
-    {% for door in doors %}
+    {% for user in users %}
         <tbody>
             <tr>
-                <td>{{door.door_number}}</td>
-                <td>{{door.name_door}}</td>
-                <td>{{door.device_name}}</td>
-                <td>{{door.driver_time}}</td>
-                <td>{{door.detector_time}}</td>
-                <td>{{door.inter_time}}</td>
-                <td>{{door.sensor_type}}</td>
+                <td>{{user.user_id}}</td>
+                <td>{{user.surname}}</td>
+                <td>{{user.name}}</td>
+                <td>{{user.card_number}}</td>
+                <td>
+                {% for item in departments %}
+                    {% if item.id == user.department_id %}
+                        {{item.name}}
+                    {% endif %}
+                {% endfor %}
+                </td>
+                <td>{{user.access_id}}</td>
                 <td class="btn-lg ">
                 <a href="#"><i class="btn-lg bi bi-pencil-square btn-outline-secondary" title="Редактировать"></i></a>
-                <a href="#"><i class="btn-lg bi bi-door-open btn-outline-secondary" title="Открыть дверь"></i></a>
-                <a href="#"><i class="btn-lg bi bi-door-closed btn-outline-secondary" title="Закрыть дверь"></i></a>
+                <a href="/user_list/{{user.user_id}}/delete"><i class="btn-lg bi bi-trash btn-outline-secondary" title="Удалить"></i></a>
                 </td>
             </tr>
         </tbody>

@@ -18,5 +18,12 @@ class CreateAccess(forms.Form):
     lock_control = forms.CharField(max_length = 150)
     time_zone = forms.CharField(max_length = 150)
     
-    
+class CreateUser(forms.Form):
+    userId = forms.CharField(max_length=150)
+    images = forms.CharField(max_length=150)
+    surname = forms.CharField(max_length=150)
+    name = forms.CharField(max_length=150)
+    department = forms.CharField(max_length=150)
+    card_number = forms.CharField(max_length=50)
+    access_id = forms.CharField(max_length=150)
     

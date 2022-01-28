@@ -1,8 +1,13 @@
+from sqlite3 import Time
+from time import sleep
 from django.test import TestCase
 from django.shortcuts import render, get_object_or_404
 from pyzkaccess import ZKAccess, ZK200, ZKSDK, sdk
 from pyzkaccess.exceptions import ZKSDKError
+from pyzkaccess.tables import User, UserAuthorize
 from ctypes import *
+from threading import *
+import itertools
 # from models import Device
 # Create your views here.
 # from .models import Department
@@ -10,6 +15,60 @@ from ctypes import *
 # blues = Department.objects.create(name="Blues")
 # Department.objects.create(name="Hard Rock", parent=rock)
 # Department.objects.create(name="Pop Rock", parent=rock)
+# def timers():
+    
+
+# con = ZKAccess(zk)
+# my_users = User(card='3545531', pin='123').with_zk(con)
+# my_user = UserAuthorize(pin='123', timezone_id=1, doors= 15).with_zk(con)
+# my_users.save()
+# my_user.save()
+# get_rt
+
+zk = 'protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd='
+conn = ZKSDK('plcommpro.dll')
+
+conn.connect(zk)
+tables = conn.get_rt_log(256)
+print(tables)
+
+
+
+
+
+# if tabe.count() > 0:
+#     print(tabe[0])
+# print(tables[0])
+# x = next(itertools.islice(x, p))
+# print(x)
+# for tabes in tables:
+#     print(tabes)
+
+# t = Timer(5, timers)
+# t.start()
+
+# zk = 'protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd='
+# con = ZKAccess(zk)
+# txns = con.table('Transaction')
+# if txns.count() > 0:
+#     print('The first transaction:', txns[0])
+# else:
+#     print('Transaction table is empty!')
+# print(txns)
+# table = conn.set_device_data('userauthorize')
+# table.send(None)
+# rec = User(card='123456', pin='123')
+# print(rec.dict)
+# records = {'Pin':'19999','AuthorizeTimezoneId':'1', 'AuthorizeDoorId':'7'}
+
+# table.send(records)
+# try:
+#     table.send(None)
+# except StopIteration:
+#     pass
+# conn.disconnect()
+
+
 
 
 # found = ZKSDK('plcommpro.dll').search_device('255.255.255.255',4096)
@@ -51,7 +110,7 @@ from ctypes import *
 
 # print(result)
 # cons = 1
-# its1 = ["DeviceID","Door1SensorType","~SerialNumber","IPAddress","Door1Drivertime","Door1Intertime","Door1Detectortime","ReaderCount"]
+# its = ["DeviceID","Door1SensorType","~SerialNumber","IPAddress","Door1Drivertime","Door1Intertime","Door1Detectortime","ReaderCount"]
 # its = ["ReaderCount"]
 # itt = f'Door{cons}SensorType,Door{cons}Drivertime,Door{cons}Detectortime'
 # itt = itt.split(',')
@@ -119,12 +178,12 @@ from ctypes import *
 # print(result)
 
 
-dicts = {'Device': 3, 'Девайс 2': 1}
-strings = ""
+# dicts = {'Device': 3, 'Девайс 2': 1}
+# strings = ""
 
-for key, value in dicts.items():
-    if strings == '':
-        strings = f'{key}.{value}'
-    else:
-        strings += f';{key}.{value}'
-print(strings)
+# for key, value in dicts.items():
+#     if strings == '':
+#         strings = f'{key}.{value}'
+#     else:
+#         strings += f';{key}.{value}'
+# print(strings)

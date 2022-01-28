@@ -13,6 +13,9 @@
     Настройки дверей
     </a>
 </li>
+<li>
+    <a class="nav-link text-white" href="/live_mode">Мониторинг</a></li>
+</li>
 {% endblock %}
 
 {% block content %}
@@ -37,7 +40,7 @@
                     <div class="list-group" id="table1">
                         {% for door in doors %}
                         <label class="list-group-item" >
-                            <input class="form-check-input mr-1" type="checkbox" id="{{door.name_door}}" name='first_table' value="{{door.device_name}}|||{{door.door_number}}">
+                            <input class="form-check-input mr-1" type="checkbox" id="{{door.name_door}}" name='first_table' value="{{door.device_ip}}|||{{door.door_number}}">
                             {{door.name_door}}|{{door.device_name}}
                         </label>
                         {% endfor %}

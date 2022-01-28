@@ -31,18 +31,19 @@
         {% recursetree department %}
             <li class="list-group-item">
                 {{ node.name }}
+                
                 <button type="button"
-                    class="btn btn-warning btn-sm js-update-department"
-                    data-url="{% url 'quantum:department_update' node.id %}">
-                <span class="glyphicon glyphicon-pencil"></span> Изменить
-                </button>
-                <button type="button"
-                    class="btn btn-danger btn-sm js-delete-department"
+                    class="btn btn-danger btn-sm js-delete-department float-end"
                     data-url="{% url 'quantum:department_delete' node.id %}">
                 <span class="glyphicon glyphicon-trash"></span> Удалить
                 </button>
+                <button type="button"
+                    class="btn btn-warning btn-sm js-update-department float-end mx-1"
+                    data-url="{% url 'quantum:department_update' node.id %}">
+                <span class="glyphicon glyphicon-pencil"></span> Изменить
+                </button>
                 {% if not node.is_leaf_node %}
-                    <ol class="children list-group list-group-numbered">
+                    <ol class="children list-group list-group-numbered mt-4">
                         {{ children }}
                     </ol>
                 {% endif %}

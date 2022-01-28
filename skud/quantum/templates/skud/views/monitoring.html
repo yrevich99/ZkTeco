@@ -1,0 +1,65 @@
+{% extends 'skud/base.html' %}
+
+{% block title %}
+    Мониторинг
+{% endblock %}
+
+{% block saidbar %}
+<li>
+    <a class="nav-link text-white" href="/access_control">Уровень доступа</a></li>
+</li>
+<li>
+    <a href="/door_settings" class="nav-link text-white">
+    Настройки дверей
+    </a>
+</li>
+<li>
+    <a class="nav-link active" href="/live_mode">Мониторинг</a></li>
+</li>
+{% endblock %}
+
+{% block content %}
+<form method="post">
+    {% csrf_token %}
+    <p><button type="submit" class="btn btn-success" value='True' name="status">Старт Мониторинг</button>
+        <button type="submit" class="btn btn-danger" value='False' name="status">Стоп Мониторинг</button>
+    </p>
+    
+    <select class="form-select mb-3" name='device_ip' aria-label="Default select example">
+        <option selected value="all">Выберите устройство</option>
+        {% for item in device %}
+        <option value="{{item.device_ip}}">{{item.device_name}}</option>
+        {% endfor %}
+    </select>
+</form>
+
+<table class="table table-bordered table-striped table-hover ">
+    <thead>
+      <tr>
+        <th scope="row">Время</th>
+        <th scope="col">Номер сотрудника</th>
+        <th scope="col">Фамилия</th>
+        <th scope="col">Имя</th>
+        <th scope="col">Номер карты</th>
+        <th scope="col">Вход/Выход</th>
+        <th scope="col">Описание события</th>
+        <th scope="col">Способ проверки</th>
+      </tr>
+    </thead>
+
+    {% for door in doors %}
+        <tbody>
+          <tr>
+            <td>{{door.door_number}}</td>
+            <td>{{door.name_door}}</td>
+            <td>{{door.device_name}}</td>
+            <td>{{door.driver_time}}</td>
+            <td>{{door.detector_time}}</td>
+            <td>{{door.inter_time}}</td>
+            <td>{{door.sensor_type}}</td>
+          </tr>
+        </tbody>
+    {% endfor %}
+</table>
+
+{% endblock %}
