@@ -8,6 +8,7 @@ from pyzkaccess.tables import User, UserAuthorize
 from ctypes import *
 from threading import *
 import itertools
+from datetime import datetime
 # from models import Device
 # Create your views here.
 # from .models import Department
@@ -33,7 +34,36 @@ tables = conn.get_rt_log(256)
 print(tables)
 
 
+print((710436534/60)%60)
 
+def time_dex(time):
+    time = int(time)
+    Second = time  %  60
+    Minute = int(( time / 60 ) % 60)
+    Hour =  int(( time / 3600 ) % 24)
+    Day = int(( time / 86400 )  %  31 + 1)
+    Month= int(( time / 2678400 ) % 12 + 1)
+    Year = int((time / 32140800 ) + 2000)
+
+
+    datetime_object = datetime.strptime(f'{Year}-{Month}-{Day} {Hour}:{Minute}:{Second}', "%Y-%m-%d %H:%M:%S")
+    return datetime_object
+
+conn = f'protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd='
+zk = ZKAccess(conn)
+tables = []
+transaction = zk.table('Transaction')
+if transaction.count() > 0:
+    for i in range(transaction.count()):
+        
+        # print(i,'---',transaction[i])
+        tables.append(transaction[i])
+        
+
+        print(transaction[i].raw_data['Cardno'])
+    print(transaction[0].raw_data)
+
+    # print(tables)
 
 
 # if tabe.count() > 0:

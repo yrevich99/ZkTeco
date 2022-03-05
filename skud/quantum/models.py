@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models.expressions import F
 from django.db.models.fields import CharField, IntegerField
+from django.forms import TimeField
 from mptt.models import MPTTModel, TreeForeignKey
 
 # Create your models here.
@@ -42,7 +43,7 @@ class User_list(models.Model):
     images = models.BinaryField(blank=True)
     surname = models.CharField(max_length=150)
     name = models.CharField(max_length=150)
-    department_id = models.IntegerField()
+    department = models.ForeignKey(Department, on_delete=models.PROTECT)
     card_number = models.CharField(max_length=50, unique=True)
     access_id = models.CharField(max_length=150)
 
@@ -50,11 +51,11 @@ class User_list(models.Model):
 class Id_table(models.Model):
     user_id = models.IntegerField(blank=True, null=True)
     department_id = models.IntegerField(blank=True, null=True)
-    access_id = models.IntegerField(blank=True, null=True)
+    access = models.ForeignKey(Access_control, on_delete=models.PROTECT, blank=True, null=True)
 
 class Access_id(models.Model):
     access_id = models.IntegerField(blank=True, null=True)
-    device_id = models.IntegerField(blank=True, null=True)
+    device = models.ForeignKey(Devices, on_delete=models.PROTECT)
 
 class Status_access(models.Model):
     user_id = models.CharField(max_length=15)
@@ -63,3 +64,28 @@ class Status_access(models.Model):
     device_ip = models.CharField(max_length=30)
     status_access = models.BooleanField(blank=True, null=True)
 
+class Transactions(models.Model):
+    time_second = models.CharField(max_length=60)
+    pin = models.IntegerField()
+    card_id = models.IntegerField()
+    verified = models.CharField(max_length=60)
+    door_name = models.CharField(max_length=60)
+    event_type = models.CharField(max_length=60)
+    in_out_state = models.CharField(max_length=60)
+    device_ip = models.CharField(max_length=60)
+
+class Main_report(models.Model):
+    user = models.ForeignKey(User_list, on_delete=models.DO_NOTHING)
+    user_pin = models.IntegerField()
+    data = models.DateField()
+    check_time = models.TimeField() 
+    in_out_state = models.CharField(max_length=60)
+    door_name = models.CharField(max_length=60)
+
+class Door_report(models.Model):
+    user = models.ForeignKey(User_list, on_delete=models.DO_NOTHING)
+    user_pin = models.IntegerField()
+    data = models.DateField()
+    check_time = models.TimeField() 
+    in_out_state = models.CharField(max_length=60)
+    door_name = models.CharField(max_length=60)

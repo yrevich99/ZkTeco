@@ -1,14 +1,17 @@
 from concurrent.futures import thread
+from glob import glob
+from msilib.schema import Error, tables
 import threading
-from typing import Dict
+from typing import Dict, Mapping
 from django import http
+from django.dispatch import receiver
 from django.forms.fields import MultiValueField
 from django.template.loader import render_to_string
 from django.shortcuts import redirect, render, get_object_or_404
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.core.paginator import Paginator
 from pyzkaccess.exceptions import ZKSDKError
-from .models import Devices, Door_setting, Department, Access_control, User_list, Id_table, Access_id, Status_access
+from .models import Devices, Door_setting, Department, Access_control, User_list, Id_table, Access_id, Status_access, Transactions, Main_report, Door_report
 from pyzkaccess import ZKAccess, ZK200, ZKSDK, device, door
 from pyzkaccess.tables import User, UserAuthorize, Transaction
 from .forms import AddDeviceForm, DepartmentForm, CreateAccess, CreateUser
@@ -17,6 +20,9 @@ import json
 from django.views.generic.list import ListView
 from threading import Thread, Lock, current_thread
 from time import sleep
+from django.core.signals import request_finished
+from django.dispatch import receiver
+import django.dispatch
 # Create your views here.
 
 #Пользователь---------------------------------------------------------------
@@ -457,96 +463,243 @@ def access_create(request):
 
 #Мониторинг------------------------------------------------------------------------------
 class LiveStream():
-    def __init__(self) -> None:
-        self.lock = Lock()
-        self.status = None
-        self.ip = None
-        self.position = 'None'
+    def __init__(self,ip) -> None:
+        self.ip = ip
 
-    def status_position(self):
-        return self.position
+    def convert_date(self, time):
+        time = int(time)
+        Second = time  %  60
+        Minute = int(( time / 60 ) % 60)
+        Hour =  int(( time / 3600 ) % 24)
+        Day = int(( time / 86400 )  %  31 + 1)
+        Month= int(( time / 2678400 ) % 12 + 1)
+        Year = int((time / 32140800 ) + 2000)
+        datetime_object = datetime.strptime(f'{Year}-{Month}-{Day} {Hour}:{Minute}:{Second}', "%Y-%m-%d %H:%M:%S")
+        return datetime_object
+
+    def verify_mode(self,num):
+        verify = {
+            '1': 'Отпечаток',
+            '3': 'Пароль',
+            '4': 'Карта',
+            '6': 'Карта или отпечаток',
+            '10': 'Карта и отпечаток',
+            '11': 'Карта и пароль',
+            '200': 'Другое'
+        }
+        if num in verify:
+            return verify[num]
+        else:
+            return 'Другое'
         
+    def door_name(self, door_id):
+        if door_id == '0':
+            return ''
+        else:
+            try:
+                return Door_setting.objects.get(device_ip=self.ip,door_number=int(door_id)).name_door
+            except Exception as err:
+                print(err)
+
+    def in_out_state(self,state):
+        status = {
+            '0': 'Вход',
+            '1': 'Выход',
+            '2': 'Неизвестно'
+        }
+        if state in status:
+            return status[state]
+        else:
+            return 'Unknown'
+
+    def event_type(self, event):
+        event_list = {
+            '0': 'Открытие картой',
+            '1': 'Нормальное открытие во временной зоне',
+            '2': 'Ожидание следующего пользователя(Карта)',
+            '3': 'Открыто групповым доступом(Карта)',
+            '4': 'Открыто аварийным паролем ',
+            '5': 'Открыто в Обычном часовом поясе',
+            '6': 'Инициированное событие Связи',
+            '7': 'Отмена сигнальной тревоги',
+            '8': 'Дистанционное Открытие',
+            '9': 'Дистанционное Закрытие',
+            '10': 'Отключено Внутридневное событие',
+            '11': 'Включено Внутридневное событие',
+            '12': 'Открыт AUX вывод',
+            '13': 'Закрыт AUX вывод',
+            '14': 'Открыто отпечатком',
+            '15': 'Открыто групповым доступом(Отпечаток)',
+            '16': 'Открыто отпечатком',
+            '17': 'Открыто картой + отпечаток',
+            '18': 'Ожидание следующего пользователя(Отпечатоком пальца)',
+            '19': 'Ожидание следующего пользователя(Карта + Отпечаток Пальца)',
+            '20': 'Слишком Короткий Интервал Между Проходами',
+            '21': 'Часовой пояс Двери Неактивен',
+            '22': 'Незаконный часовой пояс',
+            '23': 'Доступ запрещен',
+            '24': 'Защита от обратного прохода',
+            '25': 'Блокировка',
+            '26': 'Аутентификация с использованием Нескольких Карт',
+            '27': 'Незарегистрированная Карта',
+            '28': 'Время задержки истекло после открытия',
+            '29': 'Срок действия карты истек',
+            '30': 'Ошибка пароля',
+            '31': 'Слишком Короткий Интервал Нажатия Отпечатка Пальца',
+            '32': 'Аутентификация с помощью нескольких карт (Отпечаток пальца)',
+            '33': 'Срок действия отпечатка пальца истек',
+            '34': 'Незарегистрированный отпечаток пальца',
+            '35': 'Часовой пояс Двери Неактивен (Отпечаток пальца)',
+            '36': 'Часовой пояс Двери Неактивен (Кнопка Выхода)',
+            '37': 'Не удалось закрыть дверь',
+            '101': 'Открыт Принудительным Паролем ',
+            '102': 'Дверь Открылась Случайно',
+            '103': 'Принужденное Открытие Отпечатком Пальца',
+            '200': 'Дверь Открылась Правильно',
+            '201': 'Дверь Закрыта Правильно',
+            '202': 'Дверь Открыта Кнопкой ',
+            '203': 'Открытие груповым доступом',
+            '204': 'Нормальное открытие',
+            '205': 'Удаленное открытие',
+            '206': 'Запуск устройства',
+            '220': 'Вспомогательный Вход Отключен',
+            '221': 'Вспомогательный Вход Закорочен',
+            '255': 'Статус двери и Статус сигнализации',
+        }
+        if event in event_list:
+            return event_list[event]
+        else:
+            return 'Unknown'
+
+    def user_auth(self, card):
+        user = {}
+        try:
+            if card == User_list.objects.get(card_number=card).card_number:
+                user['surname'] =  User_list.objects.get(card_number=card).surname
+                user['name'] = User_list.objects.get(card_number=card).name
+        except Exception as err:
+            user['surname'] = ''
+            user['name'] = 'Незарегистрированный пользователь'
+        return user
+
+
+
     def transaction(self):
         conn = f'protocol=TCP,ipaddress={self.ip},port=4370,timeout=4000,passwd='
         zk = ZKAccess(conn)
-        table = []
         tables = zk.table('Transaction')
         if tables.count() > 0:
             for i in range(tables.count()):
-                print(i,'---',tables[i])
-                table.append(tables[i])
-            # print(table)
+                transaction = Transactions()
+                transaction.card_id  = tables[i].raw_data['Cardno']
+                transaction.pin = tables[i].raw_data['Pin']
+                transaction.verified = self.verify_mode(tables[i].raw_data['Verified'])
+                transaction.door_name = self.door_name(tables[i].raw_data['DoorID']) 
+                transaction.event_type = self.event_type(tables[i].raw_data['EventType']) 
+                transaction.in_out_state = self.in_out_state(tables[i].raw_data['InOutState']) 
+                transaction.time_second = self.convert_date(tables[i].raw_data['Time_second']) 
+                transaction.device_ip = self.ip
+                transaction.save()
         else:
             return False
-        
+    
+    def reports(self):
+        conn = f'protocol=TCP,ipaddress={self.ip},port=4370,timeout=4000,passwd='
+        zk = ZKAccess(conn)
+        tables = zk.table('Transaction')
+        if tables.count() > 0:
+            for i in range(tables.count()):
+                try:
+                    user = User_list.objects.get(user_id=int(tables[i].raw_data['Pin']))
+                    if user.user_id == int(tables[i].raw_data['Pin']):
+                        datatime = str(self.convert_date(tables[i].raw_data['Time_second'])).split(' ')
+                        if Devices.objects.get(device_ip=self.ip).main_door == 'Да':
+                            report = Main_report()
+                            report.user_id = user.id
+                            report.user_pin = int(tables[i].raw_data['Pin'])
+                            report.data = datatime[0]
+                            report.check_time = datatime[1]
+                            report.in_out_state = self.in_out_state(tables[i].raw_data['InOutState'])
+                            report.door_name = self.door_name(tables[i].raw_data['DoorID'])
+                            report.save()
+                            tables[i].delete()
+                        elif Devices.objects.get(device_ip=self.ip).main_door == 'Нет':
+                            report = Door_report()
+                            report.user_id = user.id
+                            report.user_pin = int(tables[i].raw_data['Pin'])
+                            report.data = datatime[0]
+                            report.check_time = datatime[1]
+                            report.in_out_state = self.in_out_state(tables[i].raw_data['InOutState'])
+                            report.door_name = self.door_name(tables[i].raw_data['DoorID'])
+                            report.save()
+                            tables[i].delete()
+                    else:
+                        continue
+                except Exception as err:
+                    print(err)
+
 
     def live_mode(self):
         conn = f'protocol=TCP,ipaddress={self.ip},port=4370,timeout=4000,passwd='
-        table = {}
+        tables = []
         zk = ZKSDK('plcommpro.dll')
         zk.connect(conn)
         rt_logs = zk.get_rt_log(256)
         print(rt_logs)
         for rt_log in rt_logs:
+            table = {}
             item = rt_log.split(',')
             if item[4] == '255':
                 continue
             else:
                 table['time'] = item[0]
                 table['pin'] = item[1]
+                table['surname'] = self.user_auth(item[2])['surname']
+                table['name'] = self.user_auth(item[2])['name']
                 table['card'] = item[2]
-                table['door'] = item[3]
-                table['event'] = item[4]
-                table['entry/exit'] = item[5]
-                table['verify'] = item[6]
-            print(table)
+                table['door'] = self.door_name(item[3]) 
+                table['event'] = self.event_type(item[4]) 
+                table['entry_exit'] = self.in_out_state(item[5]) 
+                table['verify'] = self.verify_mode(item[6]) 
+                tables.append(table)
         zk.disconnect()
+        # tables = [{'time': '2022-02-05 16:37:42', 'pin': '1', 'surname': '', 'name': 'Чужой', 'card': '3545531', 'door': '4', 'event': '0', 'entry_exit': '0', 'verify': '6'},
+        #         {'time': '2022-02-05 16:37:42', 'pin': '0', 'surname': '', 'name': 'Чужой', 'card': '0', 'door': '4', 'event': '27', 'entry_exit': '0', 'verify': '6'},
+        #         {'time': '2022-02-05 16:37:43', 'pin': '1', 'surname': '', 'name': 'Чужой', 'card': '3545531', 'door': '4', 'event': '0', 'entry_exit': '0', 'verify': '6'}, 
+        #         {'time': '2022-02-05 16:37:44', 'pin': '0', 'surname': '', 'name': 'Чужой', 'card': '0', 'door': '4', 'event': '27', 'entry_exit': '0', 'verify': '6'},
+        #         {'time': '2022-02-05 16:37:45', 'pin': '1', 'surname': '', 'name': 'Чужой', 'card': '3545531', 'door': '4', 'event': '0', 'entry_exit': '0', 'verify': '6'}]
+        print(self.ip)
+        return tables
         
 
-    def live_stream(self):
-        while True:
-            self.lock.acquire()
-            if self.status is False:
-                break
-            self.live_mode()
-            self.lock.release()
-            sleep(3)
-    
-    def start(self):
-        self.status = True
-        self.th = Thread(name='live',target=self.live_stream)
-        self.th.start()
-
-    def stop(self):
-        self.lock.acquire()
-        self.status = False
-        self.lock.release()
-        
 global live
 live = {}
-# live = LiveStream()
 
 def monitoring(request):
-    if request.method == "POST":
-        if 'monitoring' in live.keys():
-            status = request.POST['status']
-            if status == 'True':
-                live['monitoring'].ip = request.POST['device_ip']
-                live['monitoring'].start()
-            elif status == 'False':
-                live['monitoring'].stop()
-        else:
-            live['monitoring'] = LiveStream()
-            status = request.POST['status']
-            if status == 'True':
-                live['monitoring'].ip = request.POST['device_ip']
-                live['monitoring'].start()
-            elif status == 'False':
-                live['monitoring'].stop()
-
-            
-
-
     return render(request, 'skud/views/monitoring.html', {'device': Devices.objects.all()})
+
+
+def monitoring_js(request, ip):
+    data = dict()
+    live['monitoring'] = LiveStream(ip)
+    data['real'] = live['monitoring'].live_mode()
+    context = {'dates': data['real']}
+    return JsonResponse(data)
 # ---------------------------------------------------------------------------------------
 
+
+# Отчет ------------------------------------------------------------------------------------------
+def reports_list(request):
+    query = Devices.objects.all()
+    for ip in query:
+        print(ip.device_ip)
+        live = LiveStream(ip.device_ip)
+        live.reports()
+    return render(request, 'skud/views/reports/report.html', {'main_report': Main_report.objects.all()})
+
+
+
+
+
+
+# -------------------------------------------------------------------------------------------------

@@ -19,47 +19,37 @@
 {% endblock %}
 
 {% block content %}
-<form method="post">
+<!-- <form method="post"> -->
     {% csrf_token %}
-    <p><button type="submit" class="btn btn-success" value='True' name="status">Старт Мониторинг</button>
-        <button type="submit" class="btn btn-danger" value='False' name="status">Стоп Мониторинг</button>
+    <p>
+        <button type="submit" class="btn btn-success js-start-live" value='True' name="status">Старт Мониторинг</button>
+        <button type="submit" class="btn btn-danger js-stop-live" value='False' name="status">Стоп Мониторинг</button>
     </p>
     
-    <select class="form-select mb-3" name='device_ip' aria-label="Default select example">
-        <option selected value="all">Выберите устройство</option>
+    <select class="form-select mb-3" id="dev_ip" name='device_ip' aria-label="Default select example">
+        <option  value="all">Выберите устройство</option>
         {% for item in device %}
         <option value="{{item.device_ip}}">{{item.device_name}}</option>
         {% endfor %}
     </select>
-</form>
+<!-- </form> -->
 
-<table class="table table-bordered table-striped table-hover ">
+<table class="table table-bordered table-striped table-hover real_table">
     <thead>
-      <tr>
-        <th scope="row">Время</th>
-        <th scope="col">Номер сотрудника</th>
-        <th scope="col">Фамилия</th>
-        <th scope="col">Имя</th>
-        <th scope="col">Номер карты</th>
-        <th scope="col">Вход/Выход</th>
-        <th scope="col">Описание события</th>
-        <th scope="col">Способ проверки</th>
-      </tr>
+        <tr>
+            <th scope="row">Время</th>
+            <th scope="col">Номер сотрудника</th>
+            <th scope="col">Фамилия</th>
+            <th scope="col">Имя</th>
+            <th scope="col">Номер карты</th>
+            <th scope="col">Название двери</th>
+            <th scope="col">Вход/Выход</th>
+            <th scope="col">Описание события</th>
+            <th scope="col">Способ проверки</th>
+        </tr>
     </thead>
 
-    {% for door in doors %}
-        <tbody>
-          <tr>
-            <td>{{door.door_number}}</td>
-            <td>{{door.name_door}}</td>
-            <td>{{door.device_name}}</td>
-            <td>{{door.driver_time}}</td>
-            <td>{{door.detector_time}}</td>
-            <td>{{door.inter_time}}</td>
-            <td>{{door.sensor_type}}</td>
-          </tr>
-        </tbody>
-    {% endfor %}
+    {% include 'skud/views/realtime.html' %}
 </table>
 
 {% endblock %}
