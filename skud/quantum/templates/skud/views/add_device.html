@@ -33,6 +33,14 @@
             <span class="input-group-text" id="inputGroup-sizing-default">Порт</span>
             <input type="text" name="device_port" class="form-control" placeholder="4370" pattern="[0-9]{4,6}" value="{{device.device_port}}">
           </div>
+          <div class="input-group mb-3">
+            <span class="input-group-text">Режим двери</span>
+              <select class="form-select" name="todoor" required>
+                  <option disabled>Выберите режим работы двери</option>
+                  <option value="0">4 Двери</option>
+                  <option value="1">2 Двери</option>`
+              </select>
+          </div>
           <div class="form-check form-switch mb-3">
             <input class="form-check-input" name="main_door" type="checkbox" id="main_door">
             <label class="form-check-label">Главная дверь</label>

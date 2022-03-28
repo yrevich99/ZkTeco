@@ -27,6 +27,10 @@
         <span class="glyphicon glyphicon-plus"></span>
         Фильтр по отделам
     </a>
+    <a href='/users_list/sinc' type="button" class="btn btn-primary">
+        <span class="glyphicon glyphicon-plus"></span>
+        Синхронизация
+    </a>
 </p>
 
 <table class="table table-bordered table-striped table-hover ">
@@ -41,19 +45,19 @@
         </tr>
     </thead>
 
-    {% for user in users %}
+    {% for user in posts %}
         <tbody>
             <tr>
                 <td>{{user.user_id}}</td>
                 <td>{{user.surname}}</td>
                 <td>{{user.name}}</td>
                 <td>{{user.card_number}}</td>
-                <td>
-                {% for item in departments %}
+                <td>{{user.department.name}}
+                <!-- {% for item in departments %}
                     {% if item.id == user.department_id %}
                         {{item.name}}
                     {% endif %}
-                {% endfor %}
+                {% endfor %} -->
                 </td>
                 <td>{{user.access_id}}</td>
                 <td class="btn-lg ">
@@ -64,4 +68,5 @@
         </tbody>
     {% endfor %}
 </table>
+{% include "paginator.html" with page=posts %}
 {% endblock %}

@@ -21,15 +21,15 @@
     </div>
 
     <div class="form-group">
-        <label for="id_parent">Родитель</label>
+        <label for="id_parent" name="parent" id="id_parent">Родитель</label>
         <select class="form-control">
-            {% for dep in form.parent %}
-            <option value="{{dep.children}}">{{dep}}</option>
+            {% for dep in parent %}
+            <option value="{{dep.id}}">{{dep.name}}</option>
             {% endfor %}
             
 
         </select>
         
     </div>
-</div>
- -->
+</div> -->
+

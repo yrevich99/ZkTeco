@@ -217,3 +217,13 @@ if transaction.count() > 0:
 #     else:
 #         strings += f';{key}.{value}'
 # print(strings)
+
+
+param = {'Door4ToDoor2':'1'}
+conn = f"protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd="
+connects = ZKSDK('plcommpro.dll')
+connects.connect(conn)
+todoor = connects.set_device_param(param)
+its = ['Door4ToDoor2']
+print(connects.get_device_param(its,2048))
+connects.disconnect()

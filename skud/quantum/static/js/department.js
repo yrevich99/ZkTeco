@@ -80,6 +80,7 @@ $(function () {
     /* Binding */
 
     // Create book
+    
     $(".js-create-department").click(loadForm);
     $("#modal-department").on("submit", ".js-department-create-form", saveForm);
 

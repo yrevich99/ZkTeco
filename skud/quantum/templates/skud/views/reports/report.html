@@ -9,12 +9,12 @@
     <a class="nav-link active" href="/reports">Отчеты</a></li>
 </li>
 <li>
-    <a href="#" class="nav-link text-white">
+    <a href="/reports/smena" class="nav-link text-white">
     Смены
     </a>
 </li>
 <li>
-    <a class="nav-link text-white" href="#">Создание графика</a></li>
+    <a class="nav-link text-white" href="/reports/grafik">Создание графика</a></li>
 </li>
 <li>
     <a class="nav-link text-white" href="#">График сотрудников</a></li>
@@ -23,37 +23,71 @@
 
 
 {% block content %}
+<form method="post">
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-1">
+            <a href="/reports/refresh"><i class="btn btn-success bi bi-arrow-clockwise " title="Обновить"></i></a>
+        </div>
+        <div class="col">
+            <select class="form-select" name="filter" required>
+                <option  disabled>Выберите фильтр отчета</option>
+                <option value="1" selected>Протокол проходов</option>
+                <option value="2">Two</option>
+                <option value="3">Three</option>
+            </select>
+        </div>
+        <div class="col">
+            <button type="submit" class="btn btn-primary" value='Save'>Показать</button>
+        </div>
+    </div>
 
-<table class="table table-bordered table-striped table-hover">
-    <thead>
-        <tr>
-            <th scope="row">Номер сотрудника</th>
-            <th scope="col">Фамилия</th>
-            <th scope="col">Имя</th>
-            <th scope="col">Отдел</th>
-            <th scope="col">Номер карты</th>
-            <th scope="col">Дата</th>
-            <th scope="col">Время</th>
-            <th scope="col">Вход/Выход</th>
-            <th scope="col">Название двери</th>
-        </tr>
-    </thead>
-
-    {% for list in main_report %}
+    <div class="row mt-3 mb-3">
+        <div class="col">         
+            <div class="input-group">
+                <div class="input-group-text">Начало</div>
+                <input type="date" class="form-control" name="start_time" required value="{{ time_now }}">
+            </div>
+        </div>
+        <div class="col">
+            <div class="input-group">
+                <div class="input-group-text">Конец</div>
+                <input type="date" class="form-control" name="end_time" required value="{{ time_now }}">
+            </div>
+        </div>
+    </div>
+</form>
+    {% block 'reports' %}
+    <table class="table table-bordered table-striped table-hover">
+        <thead>
+            <tr>
+                <th scope="row">Номер сотрудника</th>
+                <th scope="col">Фамилия</th>
+                <th scope="col">Имя</th>
+                <th scope="col">Отдел</th>
+                <th scope="col">Номер карты</th>
+                <th scope="col">Дата</th>
+                <th scope="col">Время</th>
+                <th scope="col">Вход/Выход</th>
+                <th scope="col">Название двери</th>
+            </tr>
+        </thead>
+        
         <tbody>
             <tr>
-                <td>{{list.user.user_id}}</td>
-                <td>{{list.user.surname}}</td>
-                <td>{{list.user.name}}</td>
-                <td>{{list.user.department.name}}</td>
-                <td>{{list.user.card_number}}</td>
-                <td>{{list.data}}</td>
-                <td>{{list.check_time}}</td>
-                <td>{{list.in_out_state}}</td>
-                <td>{{list.door_name}}</td>
+                <td><p></p></td>
+                <td> </td>
+                <td> </td>
+                <td> </td>
+                <td> </td>
+                <td> </td>
+                <td> </td>
+                <td> </td>
+                <td> </td>
             </tr>
         </tbody>
-    {% endfor %}
-</table>
-{% endblock content %}
+    </table>
+    {% endblock %}
+
+{% endblock %}
     

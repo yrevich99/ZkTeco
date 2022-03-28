@@ -75,7 +75,7 @@ class Transactions(models.Model):
     device_ip = models.CharField(max_length=60)
 
 class Main_report(models.Model):
-    user = models.ForeignKey(User_list, on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(User_list, on_delete=models.CASCADE)
     user_pin = models.IntegerField()
     data = models.DateField()
     check_time = models.TimeField() 
@@ -83,9 +83,16 @@ class Main_report(models.Model):
     door_name = models.CharField(max_length=60)
 
 class Door_report(models.Model):
-    user = models.ForeignKey(User_list, on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(User_list, on_delete=models.CASCADE)
     user_pin = models.IntegerField()
     data = models.DateField()
     check_time = models.TimeField() 
     in_out_state = models.CharField(max_length=60)
     door_name = models.CharField(max_length=60)
+
+class Smena(models.Model):
+    smena_name = models.CharField(unique=True, max_length=60)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    start_break = models.TimeField()
+    end_break = models.TimeField()

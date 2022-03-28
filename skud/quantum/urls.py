@@ -4,10 +4,12 @@ from . import views
 app_name = 'quantum'
 
 urlpatterns = [
+    # path('', views.PostListView.as_view(), name='post_list'),
     # Сотрудники -----------------------------------------------------------
     path('users_list',views.user_list, name='user_list'),
     path('users_list/user_create', views.user_create, name='user_create'),
     path('user_list/<int:user_id>/delete', views.user_delete),
+    path('users_list/sinc', views.sinc, name='sinc'),
     # -----------------------------------------------------------------------
 
     # Устройство ------------------------------------------------------------
@@ -17,8 +19,10 @@ urlpatterns = [
     path('add_device',views.add_device, name='add_device'),
     path('edit_device/<int:id>', views.edit_device, name='edit_device'),
     path('delete_device/<str:device_ip>',views.delete_device),
-    path('device_list/<int:id>', views.current_time, name='current_time'),
+    path('device_list/<int:id>/time', views.current_time, name='current_time'),
     path('door_settings', views.door_setting_list),
+    path('door_settings/door_edit/<int:id>', views.door_edit, name='door_edit'),
+    
     # -------------------------------------------------------------------------
 
 
@@ -45,5 +49,9 @@ urlpatterns = [
 
     # Отчет ---------------------------------------------------------------------
     path('reports', views.reports_list),
+    path('reports/refresh', views.refresh_report),
+    path('reports/smena', views.smena),
+    path('reports/grafik', views.grafik),
+    path('reports/grafik/new', views.new_grafik),
     # ---------------------------------------------------------------------------
 ]

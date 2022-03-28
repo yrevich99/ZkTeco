@@ -26,4 +26,11 @@ class CreateUser(forms.Form):
     department = forms.CharField(max_length=150)
     card_number = forms.CharField(max_length=50)
     access_id = forms.CharField(max_length=150)
+
+class CreateSmena(forms.Form):
+    smena_name = forms.CharField(max_length=60)
+    start_time = forms.TimeField()
+    end_time = forms.TimeField()
+    start_break = forms.TimeField()
+    end_break = forms.TimeField()
     

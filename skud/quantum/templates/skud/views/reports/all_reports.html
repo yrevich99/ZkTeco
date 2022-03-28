@@ -1,0 +1,38 @@
+{% extends 'skud/views/reports/report.html' %}
+
+{% block 'reports' %}
+
+
+<table class="table table-bordered table-striped table-hover">
+    <thead>
+        <tr>
+            <th scope="row">Номер сотрудника</th>
+            <th scope="col">Фамилия</th>
+            <th scope="col">Имя</th>
+            <th scope="col">Отдел</th>
+            <th scope="col">Номер карты</th>
+            <th scope="col">Дата</th>
+            <th scope="col">Время</th>
+            <th scope="col">Вход/Выход</th>
+            <th scope="col">Название двери</th>
+        </tr>
+    </thead>
+    
+    {% for list in main_report %}
+        <tbody>
+            <tr>
+                <td>{{list.user.user_id}}</td>
+                <td>{{list.user.surname}}</td>
+                <td>{{list.user.name}}</td>
+                <td>{{list.user.department.name}}</td>
+                <td>{{list.user.card_number}}</td>
+                <td>{{list.data}}</td>
+                <td>{{list.check_time}}</td>
+                <td>{{list.in_out_state}}</td>
+                <td>{{list.door_name}}</td>
+            </tr>
+        </tbody>
+    {% endfor %}
+</table>
+
+{% endblock %}

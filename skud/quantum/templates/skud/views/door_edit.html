@@ -1,0 +1,42 @@
+<form method="post" class="js_door_create" action="{% url 'quantum:door_edit' door.id %}">
+    {% csrf_token %}
+    <div class="modal-header">
+        <h4 class="modal-title">Редактировать Дверь</h4>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close" id="close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+            <label >Название двери</label>
+            <input type="text" name="name_door" class="form-control" value="{{door.name_door}}" required>
+        </div>
+        <div class="form-group">
+            <label >Продолжительность открытия</label>
+            <input type="number" name="driver_time" class="form-control" value="{{door.driver_time}}">
+        </div>
+        <div class="form-group">
+            <label >Задержка статуса двери</label>
+            <input type="number" name="detector_time" class="form-control" value="{{door.detector_time}}">
+        </div>
+        <div class="form-group">
+            <label>Интервал считывания</label>
+            <input type="number" name="inter_time" class="form-control" value="{{door.inter_time}}">
+        </div>
+        <div class="form-group">
+            <label ></label>
+            <select class="form-select" name="sensor_type" required>
+                <option  disabled>Выберите статус двери</option>
+                <option value="Не указано" selected>Не указано</option>
+                <option value="Нормально-открытая" selected>Нормально-открытая</option>
+                <option value="Нормально-закрытая" selected>Нормально-закрытая</option>
+            </select>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" id="close">Закрыть</button>
+        <button type="submit" class="btn btn-primary">Изменить</button>
+    </div>
+</form>
+
+

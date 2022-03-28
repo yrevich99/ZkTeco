@@ -1,20 +1,23 @@
 from concurrent.futures import thread
 from glob import glob
 from msilib.schema import Error, tables
+from multiprocessing import context
+from re import S, template
 import threading
 from typing import Dict, Mapping
+from urllib import request
 from django import http
 from django.dispatch import receiver
 from django.forms.fields import MultiValueField
 from django.template.loader import render_to_string
 from django.shortcuts import redirect, render, get_object_or_404
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from pyzkaccess.exceptions import ZKSDKError
-from .models import Devices, Door_setting, Department, Access_control, User_list, Id_table, Access_id, Status_access, Transactions, Main_report, Door_report
+from .models import Devices, Door_setting, Department, Access_control, User_list, Id_table, Access_id, Status_access, Transactions, Main_report, Door_report, Smena
 from pyzkaccess import ZKAccess, ZK200, ZKSDK, device, door
 from pyzkaccess.tables import User, UserAuthorize, Transaction
-from .forms import AddDeviceForm, DepartmentForm, CreateAccess, CreateUser
+from .forms import AddDeviceForm, DepartmentForm, CreateAccess, CreateUser, CreateSmena
 from datetime import datetime
 import json
 from django.views.generic.list import ListView
@@ -23,11 +26,29 @@ from time import sleep
 from django.core.signals import request_finished
 from django.dispatch import receiver
 import django.dispatch
+
 # Create your views here.
+
+
+def paginations(request,objects, counts):
+    paginator = Paginator(objects, counts)
+    page = request.GET.get('page')
+    try:
+        posts = paginator.get_page(page)
+    except PageNotAnInteger:
+        posts = paginator.page(1)
+    except EmptyPage:
+        posts = paginator.page(paginator.num_pages)
+    return [posts, page]
+
 
 #Пользователь---------------------------------------------------------------
 def user_list(request):
-    return render(request, 'skud/views/users_list.html', {'users': User_list.objects.all(),'departments': Department.objects.all()})
+    users = User_list.objects.all()
+    pag = paginations(request, users, 10)
+    posts = pag[0]
+    page = pag[1]
+    return render(request, 'skud/views/users_list.html', {'users': users, 'page': page, 'posts': posts})
 
 def user_create(request):
     try:
@@ -79,7 +100,36 @@ def user_create(request):
                 'user_id': ids
                 })
 
-def set_access_user(id: str,card,lock):
+def set_access_user(id: str,card,lock, record=True):
+    ip_and_access = lock.split(';')
+    print(ip_and_access)
+    for item in ip_and_access:
+        print(item)
+        key_and_value = item.split(',')
+        ip = key_and_value[0]
+        access = int(key_and_value[1])
+        try:
+            zk = ZKAccess(f'protocol=TCP,ipaddress={ip},port=4370,timeout=4000,passwd=')
+            set_user = User(card=card, pin=id).with_zk(zk)
+            set_user.save()
+            set_auth = UserAuthorize(pin=id, timezone_id=1, doors= access).with_zk(zk)
+            set_auth.save()
+            if record == False:
+                return True
+        except Exception as err:
+            if record == True:
+                status = Status_access()
+                status.user_id = id
+                status.user_card = card
+                status.access_lock = access
+                status.device_ip = ip
+                status.status_access = True
+                status.save()
+            elif record == False:
+                print('set - ',err)
+                return False
+
+def del_access_user(id: str,card,lock, record=True):
     ip_and_access = lock.split(';')
     for item in ip_and_access:
         key_and_value = item.split(',')
@@ -88,36 +138,37 @@ def set_access_user(id: str,card,lock):
         try:
             zk = ZKAccess(f'protocol=TCP,ipaddress={ip},port=4370,timeout=4000,passwd=')
             set_user = User(card=card, pin=id).with_zk(zk)
-            set_auth = UserAuthorize(pin=id, timezone_id=1, doors= access).with_zk(zk)
-            set_user.save()
-            set_auth.save()
-        except Exception as err:
-            status = Status_access()
-            status.user_id = id
-            status.user_card = card
-            status.access_lock = access
-            status.device_ip = ip
-            status.status_access = True
-            status.save()
-
-def del_access_user(id: str,card,lock):
-    ip_and_access = lock.split(';')
-    for item in ip_and_access:
-        key_and_value = item.split(',')
-        ip = key_and_value[0]
-        access = int(key_and_value[1])
-        try:
-            zk = ZKAccess(f'protocol=TCP,ipaddress={ip},port=4370,timeout=4000,passwd=')
+            set_user.delete()
             set_auth = UserAuthorize(pin=id, timezone_id=1, doors= access).with_zk(zk)
             set_auth.delete()
+            if record == False:
+                return True
         except Exception as err:
-            status = Status_access()
-            status.user_id = id
-            status.user_card = card
-            status.access_lock = access
-            status.device_ip = ip
-            status.status_access = False
-            status.save()
+            if record == True:
+                status = Status_access()
+                status.user_id = id
+                status.user_card = card
+                status.access_lock = access
+                status.device_ip = ip
+                status.status_access = False
+                status.save()
+                print('del - ',err)
+            elif record == False:
+                print('del - ',err)
+                return False
+
+def sinc(request):
+    access = Status_access.objects.all()
+    for item in access:
+        if item.status_access == True:
+            ret_access = set_access_user(item.user_id, item.user_card, f'{item.device_ip},{item.access_lock}', record=False)
+            if ret_access == True:
+                item.delete()
+        elif item.status_access == False:
+            ret_access = del_access_user(item.user_id, item.user_card, f'{item.device_ip},{item.access_lock}', record=False)
+            if ret_access == True:
+                item.delete()
+    return  HttpResponseRedirect('/users_list')
 
 
 
@@ -128,8 +179,10 @@ def user_delete(request,user_id):
             access_list = user_list.access_id.split(';')
             for i in access_list:
                 if Access_control.objects.get(access_name=i):
+                    
                     lock_list = Access_control.objects.get(access_name=i).lock_control
-                    del_user_access = del_access_user(id=user_list.user_id, card=user_list.card_number, lock=lock_list)
+                    print(lock_list)
+                    del_user_access = del_access_user(id=str(user_list.user_id), card=user_list.card_number, lock=lock_list)
                 else:
                     print('Error')
         user_list.delete()
@@ -155,6 +208,24 @@ def door_setting_get(ip,port,parametrs):
         return door_get
     except Exception as err:
         return err
+    
+def door_edit(request, id):
+    data = dict()
+    if request.method == 'POST':
+        door = Door_setting.objects.get(id=id)
+        door.name_door = request.POST['name_door']
+        door.driver_time = request.POST['driver_time']
+        door.detector_time = request.POST['detector_time']
+        door.inter_time = request.POST['inter_time']
+        door.sensor_type = request.POST['sensor_type']
+        door.save()
+        print(request.POST)
+        
+    context = {'door': Door_setting.objects.get(id=id)}
+    data['html_form'] = render_to_string('skud/views/door_edit.html',
+    context,
+    request=request)
+    return JsonResponse(data)
 #-------------------------------------------------------------------------------------------------------
 
 #Устройства----------------------------------------------------------------------------
@@ -186,6 +257,10 @@ def add_device(request):
                 port = request.POST['device_port']
                 connstr = f'protocol=TCP,ipaddress={ip},port={port},timeout=4000,passwd='
                 dev = ip_search(ip)
+
+                live = LiveStream(ip=ip)
+                live.door4todoor2({'Door4ToDoor2':request.POST['todoor']})
+
 
                 # Добавление устройства ---------------------------------------------------------
                 add_device = Devices()
@@ -244,6 +319,9 @@ def edit_device(request, id):
             for counts in range(0, len(door)):
                 door[counts].device_name = request.POST['device_name']
                 door[counts].save()
+            live = LiveStream(ip=request.POST['device_ip'])
+            live.door4todoor2({'Door4ToDoor2':request.POST['todoor']})
+
             device.device_name = request.POST['device_name']
             device.save()
             
@@ -315,22 +393,21 @@ def ip_search(ip):
     return results_copys
 
 def current_time(request, id):
+    data = dict()
     try:
         device = Devices.objects.get(id=id)
         connstr = f'protocol=TCP,ipaddress={device.device_ip},port={device.device_port},timeout=4000,passwd='
         
         with ZKAccess(connstr=connstr) as zk:
             zk.parameters.datetime = datetime.now()
-            print('Успешно')
             message_time = 'Время установлено'
-        
+        data['message'] = message_time
     except Exception as err:
         print(err)
         message_time = 'Не удалось установить время'
-        # return HttpResponse('Error')
-    
-    # return render_to_response('skud/views/all_device.html', message='Время установлено успешно')
-    return HttpResponseRedirect('/device_list')
+        data['message'] = message_time
+        
+    return JsonResponse(data)
 #---------------------------------------------------------------------
 
 #Отдел-----------------------------------------------------------
@@ -350,7 +427,7 @@ def save_department_form(request, form, template_name):
         else:
             data['form_is_valid'] = False
     
-    context = {'form': form}
+    context = {'form': form, 'parent':Department.objects.all()}
     data['html_form'] = render_to_string(template_name,
         context,
         request=request,
@@ -373,7 +450,6 @@ def department_update(request, pk):
     return save_department_form(request, form, 'skud/views/department/department_update.html')
 
 def department_delete(request, pk):
-
     department = get_object_or_404(Department, pk=pk)
     data = dict()
     if request.method == 'POST':
@@ -389,11 +465,6 @@ def department_delete(request, pk):
             request=request,
         )
     return JsonResponse(data)
-
-class DepartmentView(ListView):
-    model = Department
-    template_name = 'department_form.html'
-    context_object_name = 'deps'
 #--------------------------------------------------------------------------------
 
 #Доступ-----------------------------------------------------------------------------------
@@ -401,8 +472,16 @@ def access_control(request):
     return render(request, 'skud/views/access_control.html', {'access_control':Access_control.objects.all()})
 
 def access_delete(request,access_name):
-    access = get_object_or_404(Access_control, access_name=access_name).delete()
-    return  HttpResponseRedirect('/access_control')
+    try:
+        access = get_object_or_404(Access_control, access_name=access_name)
+        access_id = Access_id.objects.filter(access_id=access.id)
+        print(access_id)
+        access_id.delete()
+        access.delete()
+
+        return  HttpResponseRedirect('/access_control')
+    except Exception as err:
+        return  HttpResponse('Невозможно удалить так как у пользователя есть данный доступ')
 
 def access_create(request):
     form = CreateAccess(request.POST)
@@ -465,6 +544,13 @@ def access_create(request):
 class LiveStream():
     def __init__(self,ip) -> None:
         self.ip = ip
+
+    def door4todoor2(self,param):
+        conn = f"protocol=TCP,ipaddress={self.ip},port=4370,timeout=4000,passwd="
+        connects = ZKSDK('plcommpro.dll')
+        connects.connect(conn)
+        todoor = connects.set_device_param(param)
+        connects.disconnect()
 
     def convert_date(self, time):
         time = int(time)
@@ -604,39 +690,42 @@ class LiveStream():
             return False
     
     def reports(self):
-        conn = f'protocol=TCP,ipaddress={self.ip},port=4370,timeout=4000,passwd='
-        zk = ZKAccess(conn)
-        tables = zk.table('Transaction')
-        if tables.count() > 0:
-            for i in range(tables.count()):
-                try:
-                    user = User_list.objects.get(user_id=int(tables[i].raw_data['Pin']))
-                    if user.user_id == int(tables[i].raw_data['Pin']):
-                        datatime = str(self.convert_date(tables[i].raw_data['Time_second'])).split(' ')
-                        if Devices.objects.get(device_ip=self.ip).main_door == 'Да':
-                            report = Main_report()
-                            report.user_id = user.id
-                            report.user_pin = int(tables[i].raw_data['Pin'])
-                            report.data = datatime[0]
-                            report.check_time = datatime[1]
-                            report.in_out_state = self.in_out_state(tables[i].raw_data['InOutState'])
-                            report.door_name = self.door_name(tables[i].raw_data['DoorID'])
-                            report.save()
-                            tables[i].delete()
-                        elif Devices.objects.get(device_ip=self.ip).main_door == 'Нет':
-                            report = Door_report()
-                            report.user_id = user.id
-                            report.user_pin = int(tables[i].raw_data['Pin'])
-                            report.data = datatime[0]
-                            report.check_time = datatime[1]
-                            report.in_out_state = self.in_out_state(tables[i].raw_data['InOutState'])
-                            report.door_name = self.door_name(tables[i].raw_data['DoorID'])
-                            report.save()
-                            tables[i].delete()
-                    else:
-                        continue
-                except Exception as err:
-                    print(err)
+        try:
+            conn = f'protocol=TCP,ipaddress={self.ip},port=4370,timeout=4000,passwd='
+            zk = ZKAccess(conn)
+            tables = zk.table('Transaction')
+            if tables.count() > 0:
+                for i in range(tables.count()):
+                    try:
+                        user = User_list.objects.get(user_id=int(tables[i].raw_data['Pin']))
+                        if user.user_id == int(tables[i].raw_data['Pin']):
+                            datatime = str(self.convert_date(tables[i].raw_data['Time_second'])).split(' ')
+                            if Devices.objects.get(device_ip=self.ip).main_door == 'Да':
+                                report = Main_report()
+                                report.user_id = user.id
+                                report.user_pin = int(tables[i].raw_data['Pin'])
+                                report.data = datatime[0]
+                                report.check_time = datatime[1]
+                                report.in_out_state = self.in_out_state(tables[i].raw_data['InOutState'])
+                                report.door_name = self.door_name(tables[i].raw_data['DoorID'])
+                                report.save()
+                                tables[i].delete()
+                            elif Devices.objects.get(device_ip=self.ip).main_door == 'Нет':
+                                report = Door_report()
+                                report.user_id = user.id
+                                report.user_pin = int(tables[i].raw_data['Pin'])
+                                report.data = datatime[0]
+                                report.check_time = datatime[1]
+                                report.in_out_state = self.in_out_state(tables[i].raw_data['InOutState'])
+                                report.door_name = self.door_name(tables[i].raw_data['DoorID'])
+                                report.save()
+                                tables[i].delete()
+                        else:
+                            continue
+                    except Exception as err:
+                        print(err)
+        except Exception as err:
+            print(err)
 
 
     def live_mode(self):
@@ -690,16 +779,42 @@ def monitoring_js(request, ip):
 
 # Отчет ------------------------------------------------------------------------------------------
 def reports_list(request):
+    if request.method == 'POST':
+        if request.POST['filter'] == '1':
+            return render(request, 'skud/views/reports/all_reports.html', 
+            {'main_report': Main_report.objects.filter(data__range=[request.POST['start_time'],request.POST['end_time']]), 
+            'time_now': datetime.now().strftime ("%Y-%m-%d")})
+    return render(request, 'skud/views/reports/report.html', {'time_now': datetime.now().strftime ("%Y-%m-%d")})
+
+def refresh_report(request):
     query = Devices.objects.all()
     for ip in query:
-        print(ip.device_ip)
         live = LiveStream(ip.device_ip)
         live.reports()
-    return render(request, 'skud/views/reports/report.html', {'main_report': Main_report.objects.all()})
+    return HttpResponseRedirect('/reports')
 
+def smena(request):
+    form = CreateSmena(request.POST)
+    if request.method == 'POST':
+        if form.is_valid():
+            smena = Smena()
+            smena.smena_name = request.POST['smena_name']
+            smena.start_time = request.POST['start_time']
+            smena.end_time = request.POST['end_time']
+            smena.start_break = request.POST['start_break']
+            smena.end_break = request.POST['end_break']
+            smena.save()
+            return HttpResponseRedirect('/reports/smena')
+    return render(request, 'skud/views/reports/smena.html', {'time_now': datetime.now().time().strftime ("%H:%m"), 'smena': Smena.objects.all()})
 
+def grafik(request):
+    return render(request, 'skud/views/reports/grafik.html', {'smena': Smena.objects.all()})
 
-
-
-
+def new_grafik(request):
+    # data = dict()
+    smena_name = list(Smena.objects.all().values('smena_name','id'))
+    smena_data = list(Smena.objects.all().values_list('smena_name','start_time','end_time','start_break', 'end_break', 'id'))
+    return JsonResponse({'smena': smena_name,
+                        'smena_data': smena_data
+    })
 # -------------------------------------------------------------------------------------------------
