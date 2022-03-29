@@ -8,6 +8,7 @@ urlpatterns = [
     # Сотрудники -----------------------------------------------------------
     path('users_list',views.user_list, name='user_list'),
     path('users_list/user_create', views.user_create, name='user_create'),
+    path('user_list/edit/<int:user_id>', views.user_edit, name='user_edit'),
     path('user_list/<int:user_id>/delete', views.user_delete),
     path('users_list/sinc', views.sinc, name='sinc'),
     # -----------------------------------------------------------------------

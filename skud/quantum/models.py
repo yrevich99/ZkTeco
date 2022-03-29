@@ -50,7 +50,7 @@ class User_list(models.Model):
 
 class Id_table(models.Model):
     user_id = models.IntegerField(blank=True, null=True)
-    department_id = models.IntegerField(blank=True, null=True)
+    # department_id = models.IntegerField(blank=True, null=True)
     access = models.ForeignKey(Access_control, on_delete=models.PROTECT, blank=True, null=True)
 
 class Access_id(models.Model):

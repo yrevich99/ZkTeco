@@ -61,7 +61,7 @@ def user_create(request):
     if request.method == 'POST':
         # if form.is_valid():
         new_user = User_list()
-        id_table = Id_table()
+        # id_table = Id_table()
         new_user.user_id = request.POST['userId']
         new_user.surname = request.POST['surname']
         new_user.name = request.POST['name']
@@ -89,15 +89,29 @@ def user_create(request):
             new_user.access_id = request.POST.get('access', '')
         new_user.save()
 
-        id_table.user_id = request.POST['userId']
-        id_table.department_id = request.POST['department']
-        id_table.save()
+        # id_table.user_id = request.POST['userId']
+        # id_table.department_id = request.POST['department']
+        # id_table.save()
         return  HttpResponseRedirect('/users_list')
 
     return render(request, 'skud/views/user_create.html', {
                 'departments': Department.objects.all(),
                 'access_levels': Access_control.objects.all(),
                 'user_id': ids
+                })
+
+def user_edit(request, user_id):
+    user = User_list.objects.get(user_id=user_id)
+    access = Id_table.objects.filter(user_id=user_id)
+    # if access.count() > 0:
+    #     access = Id_table.objects.get(user_id=user_id)
+    #     print(access)
+    return render(request, 'skud/views/user_edit.html',{
+                'user': user,
+                'departments': Department.objects.all(),
+                'access_levels': Access_control.objects.all(),
+                'user_access': Id_table.objects.filter(user_id=user_id),
+                # 'access_door': access,
                 })
 
 def set_access_user(id: str,card,lock, record=True):
@@ -114,8 +128,8 @@ def set_access_user(id: str,card,lock, record=True):
             set_user.save()
             set_auth = UserAuthorize(pin=id, timezone_id=1, doors= access).with_zk(zk)
             set_auth.save()
-            if record == False:
-                return True
+            # if record == False:
+            #     return True
         except Exception as err:
             if record == True:
                 status = Status_access()
@@ -125,9 +139,10 @@ def set_access_user(id: str,card,lock, record=True):
                 status.device_ip = ip
                 status.status_access = True
                 status.save()
-            elif record == False:
                 print('set - ',err)
-                return False
+            # elif record == False:
+            #     print('set - ',err)
+            #     return False
 
 def del_access_user(id: str,card,lock, record=True):
     ip_and_access = lock.split(';')
@@ -141,8 +156,8 @@ def del_access_user(id: str,card,lock, record=True):
             set_user.delete()
             set_auth = UserAuthorize(pin=id, timezone_id=1, doors= access).with_zk(zk)
             set_auth.delete()
-            if record == False:
-                return True
+            # if record == False:
+            #     return True
         except Exception as err:
             if record == True:
                 status = Status_access()
@@ -153,9 +168,9 @@ def del_access_user(id: str,card,lock, record=True):
                 status.status_access = False
                 status.save()
                 print('del - ',err)
-            elif record == False:
-                print('del - ',err)
-                return False
+            # elif record == False:
+            #     print('del - ',err)
+            #     return False
 
 def sinc(request):
     access = Status_access.objects.all()
