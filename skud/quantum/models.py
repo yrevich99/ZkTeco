@@ -33,10 +33,13 @@ class Door_setting(models.Model):
 
 
 class Department(MPTTModel):
-    name = models.CharField(max_length=64, unique=True)
-    parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
+    name = models.CharField(max_length=64, unique=True, verbose_name="Название Отдела")
+    parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children', verbose_name="Родительская категория")
     class MPTTModel:
         order_insertion_by = ['name']
+    
+    def __str__(self):
+        return self.name
 
 class Access_control(models.Model):
     access_name = models.CharField(max_length=250, unique=True, blank=False)

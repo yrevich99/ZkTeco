@@ -442,7 +442,7 @@ def save_department_form(request, form, template_name):
         else:
             data['form_is_valid'] = False
     
-    context = {'form': form, 'parent':Department.objects.all()}
+    context = {'form': form, 'parent':Department.objects.all()}    
     data['html_form'] = render_to_string(template_name,
         context,
         request=request,
