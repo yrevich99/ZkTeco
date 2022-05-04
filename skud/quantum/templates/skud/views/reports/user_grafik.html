@@ -1,0 +1,79 @@
+{% extends 'skud/base.html' %}
+
+{% block title %}
+    График сотрудников
+{% endblock %}
+
+{% block saidbar %}
+<li>
+    <a class="nav-link text-white" href="/reports">Отчеты</a></li>
+</li>
+<li>
+    <a href="/reports/smena" class="nav-link text-white">
+    Смены
+    </a>
+</li>
+<li>
+    <a class="nav-link text-white" href="/reports/grafik">Создание графика</a></li>
+</li>
+<li>
+    <a class="nav-link active" href="/reports/user_grafik">График сотрудников</a></li>
+</li>
+{% endblock %}
+
+
+{% block content %}
+<!-- <form method="post"> -->
+<!-- {% csrf_token %} -->
+    <div class="container">
+        <div class="row">
+            <div class="col-5" id="user_list_graph">
+                {% for item in users %}
+                <label class="list-group-item" >
+                    <input class="form-check-input mr-1" type="checkbox" id="{{item.user_id}}" name='users_list{{item.user_id}}' value="{{item.user_id}}">
+                    {{item.name}}
+                </label>
+                {% endfor %}
+            </div>
+            <div class="col">
+                <div class="row pb-3">
+                    <div class="col">
+                        <select class="form-select" name="department" required>
+                            <option selected>Выберите отдел</option>
+                            {% for item in department %}
+                            <option value="{{item.id}}">{{item.name}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col">
+                        <select class="form-select" name="grafik" required>
+                            <option  selected>Выберите график</option>
+                            {% for item in grafik %}
+                            <option value="{{item.id}}">{{item.grafik_name}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">         
+                        <div class="input-group">
+                            <div class="input-group-text">Начало</div>
+                            <input type="date" class="form-control" name="start_time" required value="{{ time_now }}">
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="input-group">
+                            <div class="input-group-text">Конец</div>
+                            <input type="date" class="form-control" name="end_time" required value="{{ time_now }}">
+                        </div>
+                    </div>
+                </div>
+        </div>
+    </div>
+    <div class="col mt-3 ">
+        <button class="btn btn-primary" onclick="add_graph()" value='Save'>Создать</button>
+    </div>
+<!-- </form> -->
+    
+{% endblock content %}
+    

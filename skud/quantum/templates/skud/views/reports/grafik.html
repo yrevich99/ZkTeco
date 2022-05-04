@@ -17,7 +17,7 @@
     <a class="nav-link active" href="/reports/grafik">Создание графика</a></li>
 </li>
 <li>
-    <a class="nav-link text-white" href="#">График сотрудников</a></li>
+    <a class="nav-link text-white" href="/reports/user_grafik">График сотрудников</a></li>
 </li>
 {% endblock %}
 
@@ -65,7 +65,7 @@
         </div>
 </form>
 <hr>
-<table class="table table-bordered table-striped table-hover">
+<!-- <table class="table table-bordered table-striped table-hover">
     <thead>
         <tr>
             <th scope="row">Название смены</th>
@@ -79,13 +79,13 @@
     {% for list in grafik %}
         <tbody>
             <tr>
-                <td>{{list.smena_name}}</td>
-                <td>{{list.start_time}}</td>
-                <td>{{list.end_time}}</td>
-                <td>{{list.start_break}}</td>
-                <td>{{list.end_break}}</td>
+                <td>{{list.grafik_name}}</td>
+                <td>{{list.smena.start_time}}</td>
+                <td>{{list.smena.end_time}}</td>
+                <td>{{list.smena.start_break}}</td>
+                <td>{{list.smena.end_break}}</td>
             </tr>
         </tbody>
     {% endfor %}
-</table>
+</table> -->
 {% endblock %}

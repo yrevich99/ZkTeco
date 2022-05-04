@@ -6,6 +6,11 @@ from mptt.models import MPTTModel, TreeForeignKey
 
 # Create your models here.
 
+class Grafik(models.Model):
+    number = models.IntegerField()
+    grafik_name = models.CharField(max_length=60,blank=False, unique=True)
+    smena = models.CharField(max_length=60,blank=False)
+    
 class Devices(models.Model):
     device_name = models.CharField(max_length=250, unique=True, blank=False)
     device_ip = models.CharField(max_length = 15, blank=False, unique=True)
@@ -46,6 +51,9 @@ class User_list(models.Model):
     department = models.ForeignKey(Department, on_delete=models.PROTECT)
     card_number = models.CharField(max_length=50, unique=True)
     access_id = models.CharField(max_length=150)
+    grafik = models.ForeignKey(Grafik, on_delete=models.CASCADE,blank=True, null=True)
+    start_time = models.DateField(blank=True, null=True)
+    end_time = models.DateField(blank=True, null=True)
 
 
 class Id_table(models.Model):
@@ -96,3 +104,4 @@ class Smena(models.Model):
     end_time = models.TimeField()
     start_break = models.TimeField()
     end_break = models.TimeField()
+

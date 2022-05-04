@@ -29,39 +29,39 @@ from datetime import datetime
 zk = 'protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd='
 conn = ZKSDK('plcommpro.dll')
 
-conn.connect(zk)
-tables = conn.get_rt_log(256)
-print(tables)
+# conn.connect(zk)
+# tables = conn.get_rt_log(256)
+# print(tables)
 
 
-print((710436534/60)%60)
+# print((710436534/60)%60)
 
-def time_dex(time):
-    time = int(time)
-    Second = time  %  60
-    Minute = int(( time / 60 ) % 60)
-    Hour =  int(( time / 3600 ) % 24)
-    Day = int(( time / 86400 )  %  31 + 1)
-    Month= int(( time / 2678400 ) % 12 + 1)
-    Year = int((time / 32140800 ) + 2000)
+# def time_dex(time):
+#     time = int(time)
+#     Second = time  %  60
+#     Minute = int(( time / 60 ) % 60)
+#     Hour =  int(( time / 3600 ) % 24)
+#     Day = int(( time / 86400 )  %  31 + 1)
+#     Month= int(( time / 2678400 ) % 12 + 1)
+#     Year = int((time / 32140800 ) + 2000)
 
 
-    datetime_object = datetime.strptime(f'{Year}-{Month}-{Day} {Hour}:{Minute}:{Second}', "%Y-%m-%d %H:%M:%S")
-    return datetime_object
+#     datetime_object = datetime.strptime(f'{Year}-{Month}-{Day} {Hour}:{Minute}:{Second}', "%Y-%m-%d %H:%M:%S")
+#     return datetime_object
 
-conn = f'protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd='
-zk = ZKAccess(conn)
-tables = []
-transaction = zk.table('Transaction')
-if transaction.count() > 0:
-    for i in range(transaction.count()):
+# conn = f'protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd='
+# zk = ZKAccess(conn)
+# tables = []
+# transaction = zk.table('Transaction')
+# if transaction.count() > 0:
+#     for i in range(transaction.count()):
         
-        # print(i,'---',transaction[i])
-        tables.append(transaction[i])
+#         # print(i,'---',transaction[i])
+#         tables.append(transaction[i])
         
 
-        print(transaction[i].raw_data['Cardno'])
-    print(transaction[0].raw_data)
+#         print(transaction[i].raw_data['Cardno'])
+#     print(transaction[0].raw_data)
 
     # print(tables)
 
@@ -79,24 +79,27 @@ if transaction.count() > 0:
 
 # zk = 'protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd='
 # con = ZKAccess(zk)
+
+zk = 'protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd='
+conn = ZKSDK('plcommpro.dll')
 # txns = con.table('Transaction')
 # if txns.count() > 0:
 #     print('The first transaction:', txns[0])
 # else:
 #     print('Transaction table is empty!')
 # print(txns)
-# table = conn.set_device_data('userauthorize')
-# table.send(None)
-# rec = User(card='123456', pin='123')
-# print(rec.dict)
-# records = {'Pin':'19999','AuthorizeTimezoneId':'1', 'AuthorizeDoorId':'7'}
+table = conn.set_device_data('userauthorize')
+table.send(None)
+rec = User(card='123456', pin='123')
+print(rec.dict)
+records = {'Pin':'19999','AuthorizeTimezoneId':'1', 'AuthorizeDoorId':'7'}
 
-# table.send(records)
-# try:
-#     table.send(None)
-# except StopIteration:
-#     pass
-# conn.disconnect()
+table.send(records)
+try:
+    table.send(None)
+except StopIteration:
+    pass
+conn.disconnect()
 
 
 
@@ -219,11 +222,11 @@ if transaction.count() > 0:
 # print(strings)
 
 
-param = {'Door4ToDoor2':'1'}
-conn = f"protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd="
-connects = ZKSDK('plcommpro.dll')
-connects.connect(conn)
-todoor = connects.set_device_param(param)
-its = ['Door4ToDoor2']
-print(connects.get_device_param(its,2048))
-connects.disconnect()
+# param = {'Door4ToDoor2':'1'}
+# conn = f"protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd="
+# connects = ZKSDK('plcommpro.dll')
+# connects.connect(conn)
+# todoor = connects.set_device_param(param)
+# its = ['Door4ToDoor2']
+# print(connects.get_device_param(its,2048))
+# connects.disconnect()

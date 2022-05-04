@@ -9,9 +9,10 @@ jQuery(document).ready(function($){
     var smena_row = '';
     var smena_data;
     
+
+
     function smenaRow(data){
         
-        console.log('data :>> ', data);
         smena_data = data.smena_data;
         var counts = 1;
         data.smena.forEach(dates => {
@@ -32,28 +33,29 @@ jQuery(document).ready(function($){
         var row_col = document.getElementById('row_col').value;
         if(row_col > 31)
             return alert('Максимальное значение 31');
-        var td = `<tr>
+        
+        $('#grafic_table').empty();
+        for(var i = 1; i <= row_col; i++){
+            var td = `<tr>
                     <td>${document.getElementById('grafik_name').value}</td>
                     <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
                     <td>
-                        <select class="form-select" name="filter" required>
+                        <select class="form-select" name="filter_${i}" required>
                             <option value="0">Выберите смену</option>
                             ${smena_row}
                         </select>
                 </td>
                 </tr>`; 
-        $('#grafic_table').empty();
-        for(var i = 0; i < row_col; i++){
             $('.tbody').append(td);
         }
         
         
     }
 
-    $(document).on('change', 'select', function (e) {
+    $(document).on('change', '#grafic_table select', function (e) {
         var optionSelected = $("option:selected", this);
         var valueSelected = this.value;
         var smena = smena_time(valueSelected);

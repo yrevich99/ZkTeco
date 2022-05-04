@@ -1,3 +1,5 @@
+from array import array
+from asyncio.windows_events import NULL
 from concurrent.futures import thread
 from glob import glob
 from msilib.schema import Error, tables
@@ -14,11 +16,11 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from pyzkaccess.exceptions import ZKSDKError
-from .models import Devices, Door_setting, Department, Access_control, User_list, Id_table, Access_id, Status_access, Transactions, Main_report, Door_report, Smena
+from .models import Devices, Door_setting, Department, Access_control, User_list, Id_table, Access_id, Status_access, Transactions, Main_report, Door_report, Smena, Grafik
 from pyzkaccess import ZKAccess, ZK200, ZKSDK, device, door
 from pyzkaccess.tables import User, UserAuthorize, Transaction
 from .forms import AddDeviceForm, DepartmentForm, CreateAccess, CreateUser, CreateSmena
-from datetime import datetime
+from datetime import datetime, date, timedelta
 import json
 from django.views.generic.list import ListView
 from threading import Thread, Lock, current_thread
@@ -26,7 +28,8 @@ from time import sleep
 from django.core.signals import request_finished
 from django.dispatch import receiver
 import django.dispatch
-
+from django.db.models import Q
+from ast import literal_eval
 # Create your views here.
 
 
@@ -126,10 +129,9 @@ def set_access_user(id: str,card,lock, record=True):
             zk = ZKAccess(f'protocol=TCP,ipaddress={ip},port=4370,timeout=4000,passwd=')
             set_user = User(card=card, pin=id).with_zk(zk)
             set_user.save()
-            set_auth = UserAuthorize(pin=id, timezone_id=1, doors= access).with_zk(zk)
+            set_auth = UserAuthorize(pin=id, timezone_id=1, doors=access).with_zk(zk)
             set_auth.save()
-            # if record == False:
-            #     return True
+            
         except Exception as err:
             if record == True:
                 status = Status_access()
@@ -140,9 +142,7 @@ def set_access_user(id: str,card,lock, record=True):
                 status.status_access = True
                 status.save()
                 print('set - ',err)
-            # elif record == False:
-            #     print('set - ',err)
-            #     return False
+            
 
 def del_access_user(id: str,card,lock, record=True):
     ip_and_access = lock.split(';')
@@ -154,7 +154,7 @@ def del_access_user(id: str,card,lock, record=True):
             zk = ZKAccess(f'protocol=TCP,ipaddress={ip},port=4370,timeout=4000,passwd=')
             set_user = User(card=card, pin=id).with_zk(zk)
             set_user.delete()
-            set_auth = UserAuthorize(pin=id, timezone_id=1, doors= access).with_zk(zk)
+            set_auth = UserAuthorize(pin=id, timezone_id=1, doors=access).with_zk(zk)
             set_auth.delete()
             # if record == False:
             #     return True
@@ -273,8 +273,8 @@ def add_device(request):
                 connstr = f'protocol=TCP,ipaddress={ip},port={port},timeout=4000,passwd='
                 dev = ip_search(ip)
 
-                live = LiveStream(ip=ip)
-                live.door4todoor2({'Door4ToDoor2':request.POST['todoor']})
+                # live = LiveStream(ip=ip)
+                # live.door4todoor2({'Door4ToDoor2':request.POST['todoor']})
 
 
                 # Добавление устройства ---------------------------------------------------------
@@ -796,9 +796,16 @@ def monitoring_js(request, ip):
 def reports_list(request):
     if request.method == 'POST':
         if request.POST['filter'] == '1':
-            return render(request, 'skud/views/reports/all_reports.html', 
+            return render(request, 'skud/views/reports/filter/all_reports.html', 
             {'main_report': Main_report.objects.filter(data__range=[request.POST['start_time'],request.POST['end_time']]), 
             'time_now': datetime.now().strftime ("%Y-%m-%d")})
+        if request.POST['filter'] == '2':
+            reports = AllReports(datetime.strptime(request.POST['start_time'], "%Y-%m-%d").date(), datetime.strptime(request.POST['end_time'], "%Y-%m-%d").date(), User_list.objects.get(user_id=1))
+            return render(request, 'skud/views/reports/filter/latecomers.html',
+                        {
+                            'latecomers': reports.list_of_latecomers(),
+                        }
+                        )
     return render(request, 'skud/views/reports/report.html', {'time_now': datetime.now().strftime ("%Y-%m-%d")})
 
 def refresh_report(request):
@@ -823,13 +830,109 @@ def smena(request):
     return render(request, 'skud/views/reports/smena.html', {'time_now': datetime.now().time().strftime ("%H:%m"), 'smena': Smena.objects.all()})
 
 def grafik(request):
-    return render(request, 'skud/views/reports/grafik.html', {'smena': Smena.objects.all()})
+    if request.method == 'POST':
+        grafik = Grafik()
+        grafik.number = request.POST['start_time']
+        grafik.grafik_name = request.POST['grafik_name']
+        smena_data = []
+        for number in range(1,int(request.POST['start_time'])+1):
+            smena_data.append(request.POST[f'filter_{number}'])
+        grafik.smena = smena_data
+        print(smena_data)
+        grafik.save()
+        return HttpResponseRedirect('/reports/grafik')
+    return render(request, 'skud/views/reports/grafik.html', {'smena': Smena.objects.all(),
+                                                            'grafik': Grafik.objects.all()})
 
 def new_grafik(request):
     # data = dict()
     smena_name = list(Smena.objects.all().values('smena_name','id'))
     smena_data = list(Smena.objects.all().values_list('smena_name','start_time','end_time','start_break', 'end_break', 'id'))
     return JsonResponse({'smena': smena_name,
-                        'smena_data': smena_data
+                        'smena_data': smena_data,
     })
+
+def user_grafik(request):
+    if request.method == 'POST':
+        data = json.load(request)
+        record = data.get('data')
+        for user in record['user_list']:
+            users = User_list.objects.get(user_id=user)
+            users.grafik_id = record['graph_id']
+            users.start_time = record['start_time']
+            users.end_time = record['end_time']
+            users.save()
+    return render(request, 'skud/views/reports/user_grafik.html',
+                    {'department':Department.objects.all(),
+                    'grafik': Grafik.objects.all(),
+                    'users': User_list.objects.all()})
+
+def getUsers_id(request, id):
+    data = list(User_list.objects.filter(Q(department__id=id) | Q(department__parent_id=id)).values_list('surname','name', 'user_id'))
+    return JsonResponse({'graf':data})
+
+
+
+
+
+
+class AllReports():
+    def __init__(self, start_report, end_report, user) -> None:
+        self.start_report = start_report
+        self.end_report = end_report
+        self.user = user
+
+    def rest_cycle(self, delta):
+        start_cycle = (delta - self.user.start_time).days % self.user.grafik.number
+        return start_cycle
+
+    def start_and_end_report(self):
+        curr = self.start_report
+        while curr <= self.end_report:
+            yield curr
+            curr += timedelta(days=1)
+
+    def list_of_latecomers(self):
+        user = User_list.objects.get(user_id=1)
+        users_report = []
+        for delta in self.start_and_end_report():
+            first_time_in = Main_report.objects.filter(Q(user_id=self.user.id) & Q(data=delta) & Q(in_out_state="Вход")).order_by('check_time').first()
+            shedule = self.rest_cycle(delta)
+            smena_id = literal_eval(user.grafik.smena)[int(shedule)] 
+            if smena_id != '0': 
+                shift = Smena.objects.get(id=smena_id)
+                if first_time_in:
+                    if first_time_in.check_time > shift.start_time: 
+                        users_report.append(first_time_in)
+        return users_report
 # -------------------------------------------------------------------------------------------------
+
+
+# def get_schedule(start_report,user):
+#         start_shift = (start_report - user.start_time).days % user.grafik.number
+#         return start_shift
+
+#     def get_user_report(user, start_report, current_index, current_day):
+#         first_time_in = Main_report.objects.filter(Q(user_id=user.id) & Q(data=current_day) & Q(in_out_state="Вход"))
+#         return first_time_in
+        
+#     def perdelta(start, end, delta):
+#         curr = start
+#         while curr < end:
+#             yield curr
+#             curr += delta
+
+#     def user_report(request):
+#         user = User_list.objects.get(user_id=1)
+#         i = 0
+#         for delta in perdelta(date(2022,4,20), date(2022,4,29), timedelta(days=1)):
+#             otchet = get_user_report(user, date(2022,4,20), i, delta).first()
+#             shedule = get_schedule(delta, user)
+#             smens = literal_eval(user.grafik.smena)
+#             smena_id = smens[int(shedule)] 
+#             print(otchet)
+#             print(smena_id)
+#             if smena_id == '0':
+#                 continue
+#             shift = Smena.objects.get(id=smena_id)
+#             i += 1

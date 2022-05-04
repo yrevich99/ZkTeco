@@ -54,5 +54,7 @@ urlpatterns = [
     path('reports/smena', views.smena),
     path('reports/grafik', views.grafik),
     path('reports/grafik/new', views.new_grafik),
+    path('reports/user_grafik', views.user_grafik),
+    path('reports/user_grafik/<int:id>', views.getUsers_id, name='getUsers_id'),
     # ---------------------------------------------------------------------------
 ]

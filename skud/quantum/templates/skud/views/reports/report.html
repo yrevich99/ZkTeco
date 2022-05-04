@@ -17,7 +17,7 @@
     <a class="nav-link text-white" href="/reports/grafik">Создание графика</a></li>
 </li>
 <li>
-    <a class="nav-link text-white" href="#">График сотрудников</a></li>
+    <a class="nav-link text-white" href="/reports/user_grafik">График сотрудников</a></li>
 </li>
 {% endblock %}
 
@@ -33,7 +33,7 @@
             <select class="form-select" name="filter" required>
                 <option  disabled>Выберите фильтр отчета</option>
                 <option value="1" selected>Протокол проходов</option>
-                <option value="2">Two</option>
+                <option value="2">Список опоздавших</option>
                 <option value="3">Three</option>
             </select>
         </div>
@@ -57,7 +57,7 @@
         </div>
     </div>
 </form>
-    {% block 'reports' %}
+    {% block 'protocol' %}
     <table class="table table-bordered table-striped table-hover">
         <thead>
             <tr>
