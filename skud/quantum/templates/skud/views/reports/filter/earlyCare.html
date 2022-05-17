@@ -10,13 +10,13 @@
             <th scope="col">Отдел</th>
             <th scope="col">Номер карты</th>
             <th scope="col">Дата</th>
-            <th scope="col">Время входа</th>
-            <th scope="col">График входа</th>
-            <th scope="col">Опоздал </th>
+            <th scope="col">Время выхода</th>
+            <th scope="col">График выхода</th>
+            <th scope="col">Ранний уход</th>
         </tr>
     </thead>
     
-    {% for list in latecomers %}
+    {% for list in earlyCare %}
         <tbody>
             <tr>
                 <td>{{list.user.user_id}}</td>

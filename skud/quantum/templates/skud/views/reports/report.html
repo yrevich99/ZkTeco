@@ -34,7 +34,16 @@
                 <option  disabled>Выберите фильтр отчета</option>
                 <option value="1" selected>Протокол проходов</option>
                 <option value="2">Список опоздавших</option>
-                <option value="3">Three</option>
+                <option value="3">Ранний уход</option>
+                <option value="4">Отсутвующие</option>
+            </select>
+        </div>
+        <div class="col">
+            <select class="form-select" name="department" required>
+                <option value="0" selected>Выберите отдел</option>
+                {% for item in department %}
+                <option value="{{item.id}}">{{item.name}}</option>
+                {% endfor %}
             </select>
         </div>
         <div class="col">

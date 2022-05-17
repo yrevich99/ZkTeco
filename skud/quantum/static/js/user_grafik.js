@@ -44,7 +44,7 @@ function add_graph()
         console.log(data.graf);
         for (let i = 0; i < data.graf.length; i++) 
         {
-            var item = `<label class="list-group-item"><input class="form-check-input mr-1" type="checkbox" id="${data.graf[i][2]}" name="users_list" value="${data.graf[i][2]}">${data.graf[i][1]}</label>`;
+            var item = `<label class="list-group-item"><input class="form-check-input mr-1" type="checkbox" id="${data.graf[i][2]}" name="users_list" value="${data.graf[i][2]}"> ${data.graf[i][1]}</label>`;
             $('#user_list_graph').append(item);
         }
     }

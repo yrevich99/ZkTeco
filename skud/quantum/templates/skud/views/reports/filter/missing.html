@@ -8,26 +8,18 @@
             <th scope="col">Фамилия</th>
             <th scope="col">Имя</th>
             <th scope="col">Отдел</th>
-            <th scope="col">Номер карты</th>
-            <th scope="col">Дата</th>
-            <th scope="col">Время входа</th>
-            <th scope="col">График входа</th>
-            <th scope="col">Опоздал </th>
+            <th scope="col">Отсутствовал</th>
         </tr>
     </thead>
     
-    {% for list in latecomers %}
+    {% for list in missing %}
         <tbody>
             <tr>
                 <td>{{list.user.user_id}}</td>
                 <td>{{list.user.surname}}</td>
                 <td>{{list.user.name}}</td>
                 <td>{{list.user.department.name}}</td>
-                <td>{{list.user.card_number}}</td>
-                <td>{{list.data}}</td>
-                <td>{{list.check_time}}</td>
-                <td>{{list.times}}</td>
-                <td>{{list.difference}}</td>
+                <td>{{list.time}}</td>
             </tr>
         </tbody>
     {% endfor %}

@@ -28,6 +28,7 @@
     <div class="container">
         <div class="row">
             <div class="col-5" id="user_list_graph">
+                <p>Список сотрудников</p>
                 {% for item in users %}
                 <label class="list-group-item" >
                     <input class="form-check-input mr-1" type="checkbox" id="{{item.user_id}}" name='users_list{{item.user_id}}' value="{{item.user_id}}">
@@ -74,6 +75,41 @@
         <button class="btn btn-primary" onclick="add_graph()" value='Save'>Создать</button>
     </div>
 <!-- </form> -->
+<table class="table table-bordered table-striped table-hover mt-3">
+    <thead>
+        <tr>
+            <th scope="row">Номер сотрудника</th>
+            <th scope="col">Фамилия</th>
+            <th scope="col">Имя</th>
+            <th scope="col">Отдел</th>
+            <th scope="col">Название графика</th>
+            <th scope="col">Начало</th>
+            <th scope="col">Конец</th>
+
+        </tr>
+    </thead>
     
+    
+
+        
+    {% for list in users %}
+    
+        {% if  list.grafik %}
+            <tbody>
+                <tr>
+                    <td>{{list.user_id}}</td>
+                    <td>{{list.surname}}</td>
+                    <td>{{list.name}}</td>
+                    <td>{{list.department.name}}</td>
+                    <td>{{list.grafik.grafik_name}}</td>
+                    <td>{{list.start_time}}</td>
+                    <td>{{list.end_time}}</td>
+                </tr>
+            </tbody>
+        {% endif %}
+        
+        
+    {% endfor %}
+</table>
 {% endblock content %}
     
