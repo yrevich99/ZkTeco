@@ -816,7 +816,8 @@ def monitoring_js(request, ip):
 # Отчет ------------------------------------------------------------------------------------------
 def reports_list(request):
     if request.method == 'POST':
-        if request.POST['filter'] == '1':
+        reports = AllReports(datetime.strptime(request.POST['start_time'], "%Y-%m-%d").date(), datetime.strptime(request.POST['end_time'], "%Y-%m-%d").date())
+        if request.POST['filter'] == '5':
             # Протокол проходов
             if request.POST['department'] != '0':
                 return render(request, 'skud/views/reports/filter/all_reports.html', 
@@ -829,67 +830,99 @@ def reports_list(request):
 
         if request.POST['filter'] == '2':
             # Список опоздавших
-            reports = AllReports(datetime.strptime(request.POST['start_time'], "%Y-%m-%d").date(), datetime.strptime(request.POST['end_time'], "%Y-%m-%d").date())
             user_list = []
 
             if request.POST['department'] != '0':
                 for user in User_list.objects.filter(department=request.POST['department']):
                     if user.grafik:
-                        if reports.list_of_latecomers(user):
-                            user_list += reports.list_of_latecomers(user)
+                        if reports.start(request.POST['filter'], user):
+                            user_list += reports.start(request.POST['filter'], user)
                 return render(request, 'skud/views/reports/filter/latecomers.html',
                             {'latecomers': user_list, 'department': Department.objects.all(),'time_now': datetime.now().strftime ("%Y-%m-%d")})
 
             for user in User_list.objects.all():
                 if user.grafik:
-                    if reports.list_of_latecomers(user):
-                        user_list += reports.list_of_latecomers(user)
+                    if reports.start(request.POST['filter'], user):
+                        user_list += reports.start(request.POST['filter'], user)
             return render(request, 'skud/views/reports/filter/latecomers.html',
                         {'latecomers': user_list, 'department': Department.objects.all(),'time_now': datetime.now().strftime ("%Y-%m-%d")})
 
         if request.POST['filter'] == '3':
             # Ранний уход
-            reports = AllReports(datetime.strptime(request.POST['start_time'], "%Y-%m-%d").date(), datetime.strptime(request.POST['end_time'], "%Y-%m-%d").date())
             user_list = []
 
             if request.POST['department'] != '0':
                 for user in User_list.objects.filter(department=request.POST['department']):
                     if user.grafik:
-                        if reports.list_of_early_care(user):
-                            user_list += reports.list_of_early_care(user)
+                        if reports.start(request.POST['filter'], user):
+                            user_list += reports.start(request.POST['filter'], user)
                 return render(request, 'skud/views/reports/filter/earlyCare.html',
                             {'earlyCare':user_list, 'department': Department.objects.all(),'time_now': datetime.now().strftime ("%Y-%m-%d")})
 
             for user in User_list.objects.all():
                 if user.grafik:
-                    if reports.list_of_early_care(user):
-                        user_list += reports.list_of_early_care(user)
+                    if reports.start(request.POST['filter'], user):
+                        user_list += reports.start(request.POST['filter'], user)
             return render(request, 'skud/views/reports/filter/earlyCare.html',
                             {'earlyCare':user_list, 'department': Department.objects.all(),'time_now': datetime.now().strftime ("%Y-%m-%d")})
 
         if request.POST['filter'] == '4':
             # Отсутствующие
-            reports = AllReports(datetime.strptime(request.POST['start_time'], "%Y-%m-%d").date(), datetime.strptime(request.POST['end_time'], "%Y-%m-%d").date())
             user_list = []
 
             if request.POST['department'] != '0':
                 for user in User_list.objects.filter(department=request.POST['department']):
                     if user.grafik:
-                        if reports.missing(user):
-                            user_list += reports.missing(user)
+                        if reports.start(request.POST['filter'], user):
+                            user_list += reports.start(request.POST['filter'], user)
                 return render(request, 'skud/views/reports/filter/missing.html',
                             {'missing':user_list, 'department': Department.objects.all(),'time_now': datetime.now().strftime ("%Y-%m-%d")})
 
             for user in User_list.objects.all():
                 if user.grafik:
-                    if reports.missing(user):
-                        user_list += reports.missing(user)
+                    if reports.start(request.POST['filter'], user):
+                        user_list += reports.start(request.POST['filter'], user)
             return render(request, 'skud/views/reports/filter/missing.html',
                             {'missing':user_list, 'department': Department.objects.all(), 'time_now': datetime.now().strftime ("%Y-%m-%d")})
 
-        if request.POST['filter'] == '5':
+        if request.POST['filter'] == '1':
             # График сотрудников
-            reports = AllReports(datetime.strptime(request.POST['start_time'], "%Y-%m-%d").date(), datetime.strptime(request.POST['end_time'], "%Y-%m-%d").date())
+            user_list = []
+
+            if request.POST['department'] != '0':
+                for user in User_list.objects.filter(department=request.POST['department']):
+                    if user.grafik:
+                        if reports.start(request.POST['filter'], user):
+                            user_list += reports.start(request.POST['filter'], user)
+                return render(request, 'skud/views/reports/filter/employee_schedule.html',
+                            {'employee_schedule':user_list, 'department': Department.objects.all(),'time_now': datetime.now().strftime ("%Y-%m-%d")})
+
+            for user in User_list.objects.all():
+                if user.grafik:
+                    if reports.start(request.POST['filter'], user):
+                        user_list += reports.start(request.POST['filter'], user)
+            return render(request, 'skud/views/reports/filter/employee_schedule.html',
+                            {'employee_schedule':user_list, 'department': Department.objects.all(), 'time_now': datetime.now().strftime ("%Y-%m-%d")})
+
+        if request.POST['filter'] == '6':
+            # Отсутствующие
+            user_list = []
+
+            if request.POST['department'] != '0':
+                for user in User_list.objects.filter(department=request.POST['department']):
+                    if user.grafik:
+                        if reports.start(request.POST['filter'], user):
+                            user_list += reports.start(request.POST['filter'], user)
+                return render(request, 'skud/views/reports/filter/work_time.html',
+                            {'work_time':user_list, 'department': Department.objects.all(),'time_now': datetime.now().strftime ("%Y-%m-%d")})
+
+            for user in User_list.objects.all():
+                if user.grafik:
+                    if reports.start(request.POST['filter'], user):
+                        user_list += reports.start(request.POST['filter'], user)
+            return render(request, 'skud/views/reports/filter/work_time.html',
+                            {'work_time':user_list, 'department': Department.objects.all(), 'time_now': datetime.now().strftime ("%Y-%m-%d")})
+            
 
     return render(request, 'skud/views/reports/report.html', {'time_now': datetime.now().strftime ("%Y-%m-%d"), 'department': Department.objects.all()})
 
@@ -968,6 +1001,38 @@ class AllReports():
         self.start_report = start_report
         self.end_report = end_report
 
+    def start(self, select, user):
+        if select == '1':
+            users_report = []
+            for delta in self.start_and_end_report(user):
+                if self.employee_schedule(user, delta):
+                    users_report.append(self.employee_schedule(user, delta)) 
+            return users_report
+        elif select == '2':
+            users_report = []
+            for delta in self.start_and_end_report(user):
+                if self.list_of_latecomers(user, delta):
+                    users_report.append(self.list_of_latecomers(user, delta)) 
+            return users_report
+        elif select == '3':
+            users_report = []
+            for delta in self.start_and_end_report(user):
+                if self.list_of_early_care(user, delta):
+                    users_report.append(self.list_of_early_care(user, delta))
+            return users_report 
+        elif select == '4':
+            users_report = []
+            for delta in self.start_and_end_report(user):
+                if self.missing(user, delta):
+                    users_report.append(self.missing(user, delta))
+            return users_report
+        elif select == '6':
+            users_report = []
+            for delta in self.start_and_end_report(user):
+                if self.work_time(user, delta):
+                    users_report.append(self.work_time(user, delta))
+            return users_report
+
     def rest_cycle(self, delta, user):
         try:
             start_cycle = (delta - user.start_time).days % user.grafik.number
@@ -975,15 +1040,23 @@ class AllReports():
         except Exception as ex:
             print(ex)
 
-    def start_and_end_report(self):
-        curr = self.start_report
-        while curr <= self.end_report:
+    def start_and_end_report(self, user):
+        if self.start_report < user.start_time:
+            curr = user.start_time
+        else:
+            curr = self.start_report
+        if self.end_report > user.end_time:
+            end_date = user.end_time
+        else:
+            end_date = self.end_report
+        if end_date > date.today():
+            end_date = date.today()
+        while curr <= end_date:
             yield curr
             curr += timedelta(days=1)
 
-    def list_of_latecomers(self, user):
-        users_report = []
-        for delta in self.start_and_end_report():
+    def list_of_latecomers(self, user, delta):
+        # Список опоздащих
             first_time_in = Main_report.objects.filter(Q(user_id=user.id) & Q(data=delta) & Q(in_out_state="Вход")).order_by('check_time').first()
             shedule = self.rest_cycle(delta, user)
             smena_id = literal_eval(user.grafik.smena)[int(shedule)] 
@@ -993,67 +1066,94 @@ class AllReports():
                     if first_time_in.check_time > shift.start_time: 
                         first_time_in.times = shift.start_time
                         first_time_in.difference = timedelta(hours=first_time_in.check_time.hour, minutes=first_time_in.check_time.minute, seconds=first_time_in.check_time.second) - timedelta(hours=shift.start_time.hour, minutes=shift.start_time.minute, seconds=shift.start_time.second) 
-                        users_report.append(first_time_in)
-        return users_report
+                        return first_time_in
 
-    def list_of_early_care(self, user):
-        users_report = []
-        for delta in self.start_and_end_report():
+    def list_of_early_care(self, user, delta):
+        # Ранний уход
+        last_time_in = Main_report.objects.filter(Q(user_id=user.id) & Q(data=delta) & Q(in_out_state="Выход")).order_by('check_time').last()
+        shedule = self.rest_cycle(delta, user)
+        smena_id = literal_eval(user.grafik.smena)[int(shedule)] 
+        if smena_id != '0': 
+            shift = Smena.objects.get(id=smena_id)
+            if last_time_in:
+                if last_time_in.check_time < shift.end_time:
+                    last_time_in.times = shift.end_time
+                    last_time_in.difference = timedelta(hours=shift.end_time.hour, minutes=shift.end_time.minute, seconds=shift.end_time.second) - timedelta(hours=last_time_in.check_time.hour, minutes=last_time_in.check_time.minute, seconds=last_time_in.check_time.second) 
+                    return last_time_in
+    
+    def missing(self, user, delta):
+        # Отсутсвующие
+        user_missing = Main_report.objects.filter(Q(user_id=user.id) & Q(data=delta)).order_by('check_time')
+        shedule = self.rest_cycle(delta, user)
+        smena_id = literal_eval(user.grafik.smena)[int(shedule)] 
+        if smena_id != '0': 
+            if user_missing.exists() != True:
+                user.enter_time = delta
+                return {'user': user, 'time': delta}
+    
+    def employee_schedule(self,user, delta):
+        # График сотрудников
+        smena_id = literal_eval(user.grafik.smena)[int(self.rest_cycle(delta, user))] 
+        if smena_id != '0': 
+            first_time_in = Main_report.objects.filter(Q(user_id=user.id) & Q(data=delta) & Q(in_out_state="Вход")).order_by('check_time').first()
             last_time_in = Main_report.objects.filter(Q(user_id=user.id) & Q(data=delta) & Q(in_out_state="Выход")).order_by('check_time').last()
-            shedule = self.rest_cycle(delta, user)
-            smena_id = literal_eval(user.grafik.smena)[int(shedule)] 
-            if smena_id != '0': 
-                shift = Smena.objects.get(id=smena_id)
+            shift = Smena.objects.get(id=smena_id)
+            if self.list_of_latecomers(user, delta):
+                list_of_latecomers = self.list_of_latecomers(user, delta).difference
+            else:
+                list_of_latecomers = '-'
+            if self.list_of_early_care(user, delta):
+                list_of_early_care = self.list_of_early_care(user, delta).difference
+            else: 
+                list_of_early_care = '-'
+            if self.missing(user, delta):
+                missing = 'Да'
+            else:
+                missing = 'Нет'
+            if self.work_time(user, delta):
+                total_time = self.work_time(user, delta)
+            else:
+                total_time = '-'
+            users_report = {'user':user, 
+                            'delta':delta, 
+                            'start_time':shift.start_time, 
+                            'end_time':shift.end_time, 
+                            'first_time_in':first_time_in,
+                            'last_time_in':last_time_in, 
+                            'latecomers':list_of_latecomers,
+                            'early_care':list_of_early_care,
+                            'missing':missing,
+                            'total_time': total_time}
+            return users_report
+
+    def work_time(self, user, delta):
+        first_time_in = Main_report.objects.filter(Q(user_id=user.id) & Q(data=delta) & Q(in_out_state="Вход")).order_by('check_time').first()
+        last_time_in = Main_report.objects.filter(Q(user_id=user.id) & Q(data=delta) & Q(in_out_state="Выход")).order_by('check_time').last()
+        shedule = self.rest_cycle(delta, user)
+        smena_id = literal_eval(user.grafik.smena)[int(shedule)] 
+        if smena_id != '0': 
+            shift = Smena.objects.get(id=smena_id)
+            if first_time_in:
                 if last_time_in:
-                    if last_time_in.check_time < shift.end_time:
-                        last_time_in.times = shift.end_time
-                        last_time_in.difference = timedelta(hours=shift.end_time.hour, minutes=shift.end_time.minute, seconds=shift.end_time.second) - timedelta(hours=last_time_in.check_time.hour, minutes=last_time_in.check_time.minute, seconds=last_time_in.check_time.second) 
-                        users_report.append(last_time_in)
-        return users_report
-    
-    def missing(self, user):
-        users_report = []
-        for delta in self.start_and_end_report():
-            user_missing = Main_report.objects.filter(Q(user_id=user.id) & Q(data=delta)).order_by('check_time')
-            shedule = self.rest_cycle(delta, user)
-            smena_id = literal_eval(user.grafik.smena)[int(shedule)] 
-            if smena_id != '0': 
-                if user_missing.exists() != True:
-                    user.enter_time = delta
-                    users_report.append({'user': user, 'time': delta})
-        
-        return sorted(users_report, key=itemgetter('time'))
-    
-    def employee_schedule(self,user):
-        users_report = []
+                    enter_time = ''
+                    exit_time = ''
+                    total_time = timedelta(hours=0,minutes=0, seconds=0)
+                    print(total_time)
+                    for report in Main_report.objects.filter(Q(user_id=user.id) & Q(data=delta)).order_by('check_time'):
+                        if report.in_out_state == 'Вход':
+                            if report.check_time > shift.start_time:
+                                enter_time = report.check_time
+                            else:
+                                enter_time = shift.start_time
+                        elif report.in_out_state == 'Выход':
+                            exit_time = report.check_time
+                        if enter_time and exit_time:
+                                report_time = timedelta(hours=exit_time.hour, minutes=exit_time.minute, seconds=exit_time.second) - timedelta(hours=enter_time.hour, minutes=enter_time.minute, seconds=enter_time.second)
+                                total_time += report_time
+                                enter_time = ''
+                                exit_time = '' 
+                    return {'user': user, 'total_time':total_time} 
+
+
+
 # -------------------------------------------------------------------------------------------------
-
-
-# def get_schedule(start_report,user):
-#         start_shift = (start_report - user.start_time).days % user.grafik.number
-#         return start_shift
-
-#     def get_user_report(user, start_report, current_index, current_day):
-#         first_time_in = Main_report.objects.filter(Q(user_id=user.id) & Q(data=current_day) & Q(in_out_state="Вход"))
-#         return first_time_in
-        
-#     def perdelta(start, end, delta):
-#         curr = start
-#         while curr < end:
-#             yield curr
-#             curr += delta
-
-#     def user_report(request):
-#         user = User_list.objects.get(user_id=1)
-#         i = 0
-#         for delta in perdelta(date(2022,4,20), date(2022,4,29), timedelta(days=1)):
-#             otchet = get_user_report(user, date(2022,4,20), i, delta).first()
-#             shedule = get_schedule(delta, user)
-#             smens = literal_eval(user.grafik.smena)
-#             smena_id = smens[int(shedule)] 
-#             print(otchet)
-#             print(smena_id)
-#             if smena_id == '0':
-#                 continue
-#             shift = Smena.objects.get(id=smena_id)
-#             i += 1

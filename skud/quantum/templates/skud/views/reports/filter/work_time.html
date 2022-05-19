@@ -1,0 +1,31 @@
+{% extends 'skud/views/reports/report.html' %}
+
+{% block 'protocol' %}
+<table class="table table-bordered table-striped table-hover">
+    <thead>
+        <tr>
+            <th scope="row">Номер сотрудника</th>
+            <th scope="col">Фамилия</th>
+            <th scope="col">Имя</th>
+            <th scope="col">Отдел</th>
+            <th scope="col">Номер карты</th>
+            <th scope="col">Часов работал</th>
+        </tr>
+    </thead>
+    
+    {% for list in work_time %}
+        <tbody>
+            <tr>
+                <td>{{list.user.user_id}}</td>
+                <td>{{list.user.surname}}</td>
+                <td>{{list.user.name}}</td>
+                <td>{{list.user.department.name}}</td>
+                <td>{{list.user.card_number}}</td>
+                <td>{{list.total_time}}</td>
+
+            </tr>
+        </tbody>
+    {% endfor %}
+</table>
+
+{% endblock %}

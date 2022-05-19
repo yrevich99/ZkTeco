@@ -1,0 +1,44 @@
+{% extends 'skud/views/reports/report.html' %}
+
+{% block 'protocol' %}
+<table class="table table-bordered table-striped table-hover">
+    <thead>
+        <tr>
+            <th scope="row">Номер сотрудника</th>
+            <th scope="col">Фамилия</th>
+            <th scope="col">Имя</th>
+            <th scope="col">Отдел</th>
+            <th scope="col">Дата</th>
+            <th scope="col">Начало входа</th>
+            <th scope="col">Вход</th>
+            <th scope="col">Конец выхода</th>
+            <th scope="col">Выход</th>
+            <th scope="col">Опоздал</th>
+            <th scope="col">Ранний уход</th>
+            <th scope="col">Отсутствовал</th>
+            <th scope="col">Часов работал</th>
+        </tr>
+    </thead>
+    
+    {% for list in employee_schedule %}
+        <tbody>
+            <tr>
+                <td>{{list.user.user_id}}</td>
+                <td>{{list.user.surname}}</td>
+                <td>{{list.user.name}}</td>
+                <td>{{list.user.department.name}}</td>
+                <td>{{list.delta}}</td>
+                <td>{{list.start_time}}</td>
+                <td>{{list.first_time_in.check_time}}</td>
+                <td>{{list.end_time}}</td>
+                <td>{{list.last_time_in.check_time}}</td>
+                <td>{{list.latecomers}}</td>
+                <td>{{list.early_care}}</td>
+                <td>{{list.missing}}</td>
+                <td>{{list.total_time.total_time}}</td>
+            </tr>
+        </tbody>
+    {% endfor %}
+</table>
+
+{% endblock %}
