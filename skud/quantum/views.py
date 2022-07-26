@@ -1,6 +1,7 @@
 from array import array
 from asyncio.windows_events import NULL
 from concurrent.futures import thread
+from email.mime import base
 from glob import glob
 from msilib.schema import Error, tables
 from multiprocessing import context
@@ -31,6 +32,16 @@ import django.dispatch
 from django.db.models import Q
 from ast import literal_eval
 from operator import itemgetter
+import xlwt
+import pandas as pd
+from bs4 import BeautifulSoup
+from django.contrib.staticfiles import finders
+from django.contrib import messages
+import base64
+from io import BytesIO
+import os
+from PIL import Image
+from django.core.files.uploadedfile import InMemoryUploadedFile
 # Create your views here.
 
 
@@ -49,10 +60,10 @@ def paginations(request,objects, counts):
 #Пользователь---------------------------------------------------------------
 def user_list(request):
     users = User_list.objects.all()
-    pag = paginations(request, users, 10)
-    posts = pag[0]
-    page = pag[1]
-    return render(request, 'skud/views/users_list.html', {'users': users, 'page': page, 'posts': posts})
+    # pag = paginations(request, users, 10)
+    # posts = pag[0]
+    # page = pag[1]
+    return render(request, 'skud/views/users_list.html', {'users': users})
 
 def user_create(request):
     try:
@@ -72,8 +83,15 @@ def user_create(request):
         new_user.department_id = request.POST['department']
         new_user.card_number = request.POST['card_number']
 
+        # file = open(request.POST['images'], 'bw')
+        # print(file)
+        # new_user.images = file
+        if request.POST['images']:
+            new_user.images = request.POST['images']
+
+
         try:
-            access_list =  request.POST.getlist('access')
+            access_list =  list(set(request.POST.getlist('access')))
             access_str = ''
             for value in access_list:
                 if Access_control.objects.filter(id=value):
@@ -92,10 +110,6 @@ def user_create(request):
             print(err)
             new_user.access_id = request.POST.get('access', '')
         new_user.save()
-
-        # id_table.user_id = request.POST['userId']
-        # id_table.department_id = request.POST['department']
-        # id_table.save()
         return  HttpResponseRedirect('/users_list')
 
     return render(request, 'skud/views/user_create.html', {
@@ -106,24 +120,96 @@ def user_create(request):
 
 def user_edit(request, user_id):
     user = User_list.objects.get(user_id=user_id)
-    access = Id_table.objects.filter(user_id=user_id)
-    
     if request.method == 'POST':
+        try:
+            access_list =  list(set(request.POST.getlist('access'))) 
+            acc = Id_table.objects.filter(user_id=user_id).values('access_id')
+            old_access = []
+            for item in acc:
+                for i in item.values():
+                    old_access.append(str(i)) 
+            access_str = ''
+            del_access = [access for access in old_access if access not in access_list]
+            add_access = [access for access in access_list if access not in old_access]
+            if user.card_number == request.POST['card_number']:
+                for value in del_access:
+                    lock_control = Access_control.objects.get(id=value).lock_control
+                    del_access_user(lock=lock_control, card=request.POST['card_number'], id=request.POST['userId'])
+                    id_tables = Id_table.objects.filter(Q(user_id=user_id) & Q(access_id=value)).delete()
+                for value in add_access:
+                    lock_control = Access_control.objects.get(id=value).lock_control
+                    set_access_user(lock=lock_control, card=request.POST['card_number'], id=request.POST['userId'])
+
+                    id_tables = Id_table()
+                    id_tables.user_id = request.POST['userId']
+                    id_tables.access_id = value
+                    id_tables.save()
+
+            elif user.card_number != request.POST['card_number']:
+                for value in old_access:
+                    lock_control = Access_control.objects.get(id=value).lock_control
+                    del_access_user(lock=lock_control, card=user.card_number, id=request.POST['userId'])
+                    id_tables = Id_table.objects.filter(Q(user_id=user_id) & Q(access_id=value)).delete()
+                for value in access_list:
+                    lock_control = Access_control.objects.get(id=value).lock_control
+                    set_access_user(lock=lock_control, card=request.POST['card_number'], id=request.POST['userId'])
+
+                    id_tables = Id_table()
+                    id_tables.user_id = request.POST['userId']
+                    id_tables.access_id = value
+                    id_tables.save()
+
+            for value in access_list:
+                if Access_control.objects.filter(id=value):
+                    if access_str == '':
+                        access_str += f'{Access_control.objects.get(id=value).access_name}'
+                    else:
+                        access_str += f';{Access_control.objects.get(id=value).access_name}'
+            user.access_id = access_str
+            user.card_number = request.POST['card_number']
+            if request.POST['images']:
+                user.images = request.POST['images']
+            messages.success(request, 'Успешно изменено!')
+        except Exception as err:
+            messages.error(request, 'Ошибка.')
+            print(err)
+
         user.surname = request.POST['surname']
         user.name = request.POST['name']
         user.department_id = request.POST['department']
-        user.card_number = request.POST['card_number']
         user.save()
-    # if access.count() > 0:
-    #     access = Id_table.objects.get(user_id=user_id)
-    #     print(access)
+        # return HttpResponseRedirect('/users_list')
+
     return render(request, 'skud/views/user_edit.html',{
                 'user': user,
                 'departments': Department.objects.all(),
                 'access_levels': Access_control.objects.all(),
                 'user_access': Id_table.objects.filter(user_id=user_id),
-                # 'access_door': access,
                 })
+
+
+def user_delete(request,user_id):
+    try:
+        user_list = get_object_or_404(User_list, user_id=user_id)
+        if user_list.access_id != '':
+            access_list = user_list.access_id.split(';')
+            for i in access_list:
+                if Access_control.objects.get(access_name=i):
+                    lock_list = Access_control.objects.get(access_name=i).lock_control
+                    print(lock_list)
+                    del_user_access = del_access_user(id=str(user_list.user_id), card=user_list.card_number, lock=lock_list)
+                else:
+                    print('Error')
+        user_list.delete()
+        user_table = Id_table.objects.filter(user_id=user_id).delete()
+        messages.success(request, 'Успешно удалено!')
+        return  HttpResponseRedirect('/users_list')
+    except Exception as err:
+        print(err)
+        messages.error(request, 'Произошла ошибка!')
+        return  HttpResponseRedirect('/users_list')
+
+
 
 def set_access_user(id: str,card,lock, record=True):
     ip_and_access = lock.split(';')
@@ -194,257 +280,10 @@ def sinc(request):
             ret_access = del_access_user(item.user_id, item.user_card, f'{item.device_ip},{item.access_lock}', record=False)
             if ret_access == True:
                 item.delete()
+    messages.success(request, 'Успешно синхронизировано!')
     return  HttpResponseRedirect('/users_list')
 
-
-
-def user_delete(request,user_id):
-    try:
-        user_list = get_object_or_404(User_list, user_id=user_id)
-        if user_list.access_id != '':
-            access_list = user_list.access_id.split(';')
-            for i in access_list:
-                if Access_control.objects.get(access_name=i):
-                    
-                    lock_list = Access_control.objects.get(access_name=i).lock_control
-                    print(lock_list)
-                    del_user_access = del_access_user(id=str(user_list.user_id), card=user_list.card_number, lock=lock_list)
-                else:
-                    print('Error')
-        user_list.delete()
-        user_table = Id_table.objects.filter(user_id=user_id).delete()
-        return  HttpResponseRedirect('/users_list')
-    except Exception as err:
-        print(err)
-        return  HttpResponseRedirect('/users_list')
 #-------------------------------------------------------------------------------------
-
-#Двери-------------------------------------------------------------------------------------
-def door_setting_list(request):
-    return render(request, 'skud/views/door_setting.html', {'doors': Door_setting.objects.all()})
-
-def door_setting_get(ip,port,parametrs):
-    try:
-        conn = f"protocol=TCP,ipaddress={ip},port={port},timeout=4000,passwd="
-        params = parametrs.split(',')
-        connects = ZKSDK('plcommpro.dll')
-        connects.connect(conn)
-        door_get = connects.get_device_param(params,2048)
-        connects.disconnect()
-        return door_get
-    except Exception as err:
-        return err
-    
-def door_edit(request, id):
-    data = dict()
-    if request.method == 'POST':
-        door = Door_setting.objects.get(id=id)
-        door.name_door = request.POST['name_door']
-        door.driver_time = request.POST['driver_time']
-        door.detector_time = request.POST['detector_time']
-        door.inter_time = request.POST['inter_time']
-        door.sensor_type = request.POST['sensor_type']
-        door.save()
-        print(request.POST)
-        
-    context = {'door': Door_setting.objects.get(id=id)}
-    data['html_form'] = render_to_string('skud/views/door_edit.html',
-    context,
-    request=request)
-    return JsonResponse(data)
-#-------------------------------------------------------------------------------------------------------
-
-#Устройства----------------------------------------------------------------------------
-def search_list(request):
-    return render(request, 'skud/views/search_device.html')
-
-def search_device_list(request):
-    search = search_devices()
-    if(search != 'error'):
-        results = search[0]
-        device_counts = search[1]
-    else:
-        results = {}
-        device_counts = 0
-    return render(request, 'skud/views/search_device.html', {
-                                                            'results': results,
-                                                            'device_counts': device_counts,
-                                                            })
-
-def modify_ip(request):
-    return JsonResponse()
-
-def device_list(request):
-    return render(request, 'skud/views/all_device.html', {'devices': Devices.objects.all()})
-
-def add_device(request):
-    form = AddDeviceForm(request.POST)
-    if request.method == 'POST':
-        try:
-            if form.is_valid():
-                ip = request.POST['device_ip']
-                port = request.POST['device_port']
-                connstr = f'protocol=TCP,ipaddress={ip},port={port},timeout=4000,passwd='
-                dev = ip_search(ip)
-
-                # live = LiveStream(ip=ip)
-                # live.door4todoor2({'Door4ToDoor2':request.POST['todoor']})
-
-
-                # Добавление устройства ---------------------------------------------------------
-                add_device = Devices()
-                add_device.device_name = request.POST['device_name']
-                add_device.device_ip = request.POST['device_ip']
-                add_device.device_port = request.POST['device_port']
-                add_device.device_add = 'Да'
-                add_device.device_mac = dev['MAC']
-                add_device.device_type = dev['Device']
-                add_device.serial_number = dev['SN']
-                if request.POST.get('main_door'):
-                    add_device.main_door = 'Да'
-                else:
-                    add_device.main_door = 'Нет'
-                if request.POST.get('device_clear'):
-                    zk = ZKAccess(f'protocol=TCP,ipaddress={request.POST["device_ip"]},port=4370,timeout=4000,passwd=')
-                    for record in zk.table('User'):
-                        record.delete()
-                    for record in zk.table('UserAuthorize'):
-                        record.delete()
-                    print('delete')
-                add_device.save()
-
-                # Добавление двери--------------------------------------------------------
-                lock_count = door_setting_get(ip,port,"LockCount")
-                lock_count = int(lock_count["LockCount"])
-                
-                for counts in range(1,(lock_count+1)):
-                    parameters = f'Door{counts}Drivertime,Door{counts}Detectortime,Door{counts}Intertime,Door{counts}SensorType'
-                    door_setting = Door_setting()
-                    get_param = door_setting_get(ip,port,parameters)
-                    door_setting.door_number = counts
-                    door_setting.device_ip = request.POST['device_ip']
-                    door_setting.name_door = (request.POST['device_name'] + '-' + str(counts))
-                    door_setting.device_name = request.POST['device_name']
-                    door_setting.driver_time = int(get_param[f'Door{counts}Drivertime'])
-                    door_setting.detector_time = int(get_param[f'Door{counts}Detectortime'])
-                    door_setting.inter_time = int(get_param[f'Door{counts}Intertime'])
-                    if (int(get_param[f'Door{counts}SensorType']) == 0):
-                        door_setting.sensor_type = 'Не указано'
-                    elif (int(get_param[f'Door{counts}SensorType']) == 1):
-                        door_setting.sensor_type = 'Нормально - открытая'
-                    elif (int(get_param[f'Door{counts}SensorType']) == 2):
-                        door_setting.sensor_type = 'Нормально - закрытая'
-                    door_setting.save()
-                # ------------------------------------------------------------------------------
-
-            return HttpResponseRedirect('/device_list')
-        except ZKSDKError as err:
-            print(err)
-            return HttpResponse("Ошибка соединения")
-        except Exception as err:
-            print(err)
-            return HttpResponse("Возникла ошибка")
-    return render(request, 'skud/views/add_device.html')
-
-def edit_device(request, id):
-    if request.method == 'POST':
-        try:
-            device = Devices.objects.get(id=id)
-            door = Door_setting.objects.filter(device_name=device.device_name)
-            
-            for counts in range(0, len(door)):
-                door[counts].device_name = request.POST['device_name']
-                door[counts].save()
-            live = LiveStream(ip=request.POST['device_ip'])
-            live.door4todoor2({'Door4ToDoor2':request.POST['todoor']})
-
-            device.device_name = request.POST['device_name']
-            device.save()
-            
-        except Exception as err:
-            print(err)
-            return HttpResponse("Девайс не найден")
-        
-        return HttpResponseRedirect('/device_list')
-    data = {
-        'device' : Devices.objects.get(id=id)
-    }
-
-    return render(request, 'skud/views/add_device.html', context=data)
-
-def delete_device(request, device_ip):
-    try:
-        if (Devices.objects.get(device_ip=device_ip)):
-            dev_name = Devices.objects.get(device_ip=device_ip).device_name
-            device = get_object_or_404(Devices, device_ip=device_ip).delete()
-            door_setting = Door_setting.objects.filter(device_name=dev_name).delete()
-    except Exception as err:
-        print(err)
-        return HttpResponse('Error')
-    return HttpResponseRedirect('/device_list')
-
-def search_devices():
-    results = []
-    device_counts = 0
-    
-    try:
-        found = ZKSDK('plcommpro.dll').search_device('255.255.255.255',4096)
-        device_counts = len(found)
-
-        for device_count in range(0, device_counts):
-            copy_found = found[device_count-1].split(',')
-            results_copys = {}
-            results_copys['num'] = str(device_count+1)
-
-            for founds in copy_found:
-                key, value = founds.split('=')
-
-                if key == 'MAC' or key == 'IP' or key == 'SN' or key == 'Device':
-                    results_copys[key] = value
-            add_device = Devices.objects.filter(serial_number=results_copys['SN'])
-
-            if add_device:
-                results_copys['adds'] = 'Да'
-            else:
-                results_copys['adds'] = 'Нет'
-
-            results.append(results_copys)
-            del results_copys  
-        return [results,device_counts]
-    except Exception as err:
-        print(err)
-        return 'error'
-
-def ip_search(ip):
-    found = ZKSDK('plcommpro.dll').search_device(ip,4096)
-    device_counts = len(found)
-    copy_found = found[0].split(',')
-    results_copys = {}
-
-    for founds in copy_found:
-        key, value = founds.split('=')
-
-        if key == 'MAC' or key == 'IP' or key == 'SN' or key == 'Device':
-            results_copys[key] = value
-    return results_copys
-
-def current_time(request, id):
-    data = dict()
-    try:
-        device = Devices.objects.get(id=id)
-        connstr = f'protocol=TCP,ipaddress={device.device_ip},port={device.device_port},timeout=4000,passwd='
-        
-        with ZKAccess(connstr=connstr) as zk:
-            zk.parameters.datetime = datetime.now()
-            message_time = 'Время установлено'
-        data['message'] = message_time
-    except Exception as err:
-        print(err)
-        message_time = 'Не удалось установить время'
-        data['message'] = message_time
-        
-    return JsonResponse(data)
-#---------------------------------------------------------------------
 
 #Отдел-----------------------------------------------------------
 def department_list(request):
@@ -503,6 +342,323 @@ def department_delete(request, pk):
     return JsonResponse(data)
 #--------------------------------------------------------------------------------
 
+#Двери-------------------------------------------------------------------------------------
+def door_setting_list(request):
+    return render(request, 'skud/views/door_setting.html', {'doors': Door_setting.objects.all()})
+
+
+
+def door_edit(request, id):
+    data = dict()
+    if request.method == 'POST':
+        door = Door_setting.objects.get(id=id)
+        door.name_door = request.POST['name_door']
+        try:
+            sensor_type = ''
+            # if (request.POST['sensor_type'] == 'Не указано'):
+            #     sensor_type = 0
+            # elif (request.POST['sensor_type'] == 'Нормально-открытая'):
+            #     sensor_type = 1
+            # elif (request.POST['sensor_type'] == 'Нормально-закрытая'):
+            #     sensor_type = 2
+            # if (request.POST['sensor_type'] == '0'):
+            #     sensor_type = 'Не указано'
+            # elif (request.POST['sensor_type'] == '1'):
+            #     sensor_type = 'Нормально - открытая'
+            # elif (request.POST['sensor_type'] == '2'):
+            #     sensor_type = 'Нормально - закрытая'
+            parameters_set = {
+            f"Door{door.door_number}Drivertime":f"{request.POST['driver_time']}",
+            f"Door{door.door_number}Detectortime":f"{request.POST['detector_time']}",
+            f"Door{door.door_number}Intertime":f"{request.POST['inter_time']}",
+            f"Door{door.door_number}SensorType": f"{request.POST['sensor_type']}",
+            f"Door{door.door_number}KeepOpenTimeZone": f"{request.POST['keep_open_time']}",
+            }
+            parameters_get = f'Door{door.door_number}Drivertime,Door{door.door_number}Detectortime,Door{door.door_number}Intertime,Door{door.door_number}SensorType,Door{door.door_number}KeepOpenTimeZone'
+            
+            set_param = DeviceSetting().door_setting_set(door.device_ip,'4370',parameters_set)
+            get_param = DeviceSetting().door_setting_get(door.device_ip,'4370',parameters_get)
+            print(get_param)
+            if (get_param[f'Door{door.door_number}SensorType'] == '0'):
+                sensor_type = 'Не указано'
+            elif (get_param[f'Door{door.door_number}SensorType'] == '1'):
+                sensor_type = 'Нормально - открытая'
+            elif (get_param[f'Door{door.door_number}SensorType'] == '2'):
+                sensor_type = 'Нормально - закрытая'
+            door.driver_time = int(get_param[f'Door{door.door_number}Drivertime'])
+            door.detector_time = int(get_param[f'Door{door.door_number}Detectortime'])
+            door.inter_time = int(get_param[f'Door{door.door_number}Intertime'])
+            door.sensor_type = sensor_type
+
+            if get_param[f'Door{door.door_number}KeepOpenTimeZone'] == '0':
+                door.keep_open_time = ' '
+            elif get_param[f'Door{door.door_number}KeepOpenTimeZone'] == '1':
+                door.keep_open_time = 'Включено'
+            messages.success(request, 'Успешно Изменено!')
+        except Exception as err:
+            print('errSet',err)
+            messages.error(request, 'Данные изменить не удалось!')
+        door.save()
+        
+    context = {'door': Door_setting.objects.get(id=id)}
+    data['html_form'] = render_to_string('skud/views/door_edit.html',
+    context,
+    request=request)
+    return JsonResponse(data)
+
+def door_state_control(request,id,door_count, time):
+    door = Door_setting.objects.get(id=id)
+    try:
+        # state = DeviceSetting().open_close_door(door.device_ip,'4370',door_count, time)
+        connstr = f"protocol=TCP,ipaddress={door.device_ip},port=4370,timeout=4000,passwd="
+        with ZKAccess(connstr=connstr) as zk:
+            zk.doors[0].relays.switch_on(5)
+        if time == '255':
+            message_time = f'Дверь {door.name_door} открыта'
+        elif time == '0':
+            message_time = f'Дверь {door.name_door} закрыта'
+        messages.success(request, message_time)
+    except Exception as err:
+        print(err)
+        
+        if time == '255':
+            message_time = f'Дверь {door.name_door} открыть не удалось'
+        elif time == '0':
+            message_time = f'Дверь {door.name_door} закрыть не удалось'
+        messages.error(request, message_time)
+    
+    return HttpResponseRedirect('/door_settings')
+#-------------------------------------------------------------------------------------------------------
+
+#Устройства----------------------------------------------------------------------------
+
+class DeviceSetting():
+    
+    def __init__(self) -> None:
+        pass
+
+    def door_setting_get(self,ip,port,parametrs):
+        try:
+            conn = f"protocol=TCP,ipaddress={ip},port={port},timeout=4000,passwd="
+            params = parametrs.split(',')
+            connects = ZKSDK('plcommpro.dll')
+            connects.connect(conn)
+            door_get = connects.get_device_param(params,2048)
+            connects.disconnect()
+            return door_get
+        except Exception as err:
+            return err
+
+    def door_setting_set(self,ip,port,parametrs):
+        conn = f"protocol=TCP,ipaddress={ip},port={port},timeout=4000,passwd="
+        connects = ZKSDK('plcommpro.dll')
+        connects.connect(conn)
+        door_get = connects.set_device_param(parametrs)
+        connects.disconnect()
+
+    def open_close_door(self,ip,port,door_count,time):
+        conn = f"protocol=TCP,ipaddress={ip},port={port},timeout=4000,passwd="
+        connects = ZKSDK('plcommpro.dll')
+        connects.connect(conn)
+        state = connects.control_device(1,door_count,1,time,0)
+        connects.disconnect()
+
+
+    
+    def search_devices(self):
+        results = []
+        device_counts = 0
+        
+        try:
+            found = ZKSDK('plcommpro.dll').search_device('255.255.255.255',4096)
+            device_counts = len(found)
+            for device_count in range(0, device_counts):
+                copy_found = found[device_count-1].split(',')
+                results_copys = {}
+                results_copys['num'] = str(device_count+1)
+
+                for founds in copy_found:
+                    key, value = founds.split('=')
+
+                    if key == 'MAC' or key == 'IP' or key == 'SN' or key == 'Device':
+                        results_copys[key] = value
+                add_device = Devices.objects.filter(serial_number=results_copys['SN'])
+
+                if add_device:
+                    results_copys['adds'] = 'Да'
+                else:
+                    results_copys['adds'] = 'Нет'
+
+                results.append(results_copys)
+                del results_copys  
+            return [results,device_counts]
+        except Exception as err:
+            print(err)
+            return 'error'
+
+    def ip_search(self,ip):
+        found = ZKSDK('plcommpro.dll').search_device(ip,4096)
+        device_counts = len(found)
+        copy_found = found[0].split(',')
+        results_copys = {}
+
+        for founds in copy_found:
+            key, value = founds.split('=')
+
+            if key == 'MAC' or key == 'IP' or key == 'SN' or key == 'Device':
+                results_copys[key] = value
+        return results_copys
+
+def search_list(request):
+    return render(request, 'skud/views/search_device.html')
+
+def search_device_list(request):
+    search = DeviceSetting().search_devices()
+    if(search != 'error'):
+        results = search[0]
+        device_counts = search[1]
+    else:
+        results = {}
+        device_counts = 0
+    return render(request, 'skud/views/search_device.html', {
+                                                            'results': results,
+                                                            'device_counts': device_counts,
+                                                            })
+
+def modify_ip(request):
+    return JsonResponse()
+
+def device_list(request):
+    return render(request, 'skud/views/all_device.html', {'devices': Devices.objects.all()})
+
+def add_device(request):
+    form = AddDeviceForm(request.POST)
+    if request.method == 'POST':
+        try:
+            if form.is_valid():
+                ip = request.POST['device_ip']
+                port = request.POST['device_port']
+                connstr = f'protocol=TCP,ipaddress={ip},port={port},timeout=4000,passwd='
+                dev = DeviceSetting().ip_search(ip)
+
+                # live = LiveStream(ip=ip)
+                # live.door4todoor2({'Door4ToDoor2':request.POST['todoor']})
+
+
+                # Добавление устройства ---------------------------------------------------------
+                add_device = Devices()
+                add_device.device_name = request.POST['device_name']
+                add_device.device_ip = request.POST['device_ip']
+                add_device.device_port = request.POST['device_port']
+                add_device.device_add = 'Да'
+                add_device.device_mac = dev['MAC']
+                add_device.device_type = dev['Device']
+                add_device.serial_number = dev['SN']
+                if request.POST.get('main_door'):
+                    add_device.main_door = 'Да'
+                else:
+                    add_device.main_door = 'Нет'
+                if request.POST.get('device_clear'):
+                    zk = ZKAccess(f'protocol=TCP,ipaddress={request.POST["device_ip"]},port=4370,timeout=4000,passwd=')
+                    for record in zk.table('User'):
+                        record.delete()
+                    for record in zk.table('UserAuthorize'):
+                        record.delete()
+                    print('delete')
+                add_device.save()
+
+                # Добавление двери--------------------------------------------------------
+                lock_count = DeviceSetting().door_setting_get(ip,port,"LockCount")
+                lock_count = int(lock_count["LockCount"])
+                
+                for counts in range(1,(lock_count+1)):
+                    parameters = f'Door{counts}Drivertime,Door{counts}Detectortime,Door{counts}Intertime,Door{counts}SensorType,Door{counts}KeepOpenTimeZone'
+                    door_setting = Door_setting()
+                    get_param = DeviceSetting().door_setting_get(ip,port,parameters)
+                    door_setting.door_number = counts
+                    door_setting.device_ip = request.POST['device_ip']
+                    door_setting.name_door = (request.POST['device_name'] + '-' + str(counts))
+                    door_setting.device_name = request.POST['device_name']
+                    door_setting.driver_time = int(get_param[f'Door{counts}Drivertime'])
+                    door_setting.detector_time = int(get_param[f'Door{counts}Detectortime'])
+                    door_setting.inter_time = int(get_param[f'Door{counts}Intertime'])
+                    if get_param[f'Door{counts}KeepOpenTimeZone'] == '0':
+                        door_setting.keep_open_time = ' '
+                    elif get_param[f'Door{counts}KeepOpenTimeZone'] == '1':
+                        door_setting.keep_open_time = 'Включено'
+                    if (int(get_param[f'Door{counts}SensorType']) == 0):
+                        door_setting.sensor_type = 'Не указано'
+                    elif (int(get_param[f'Door{counts}SensorType']) == 1):
+                        door_setting.sensor_type = 'Нормально - открытая'
+                    elif (int(get_param[f'Door{counts}SensorType']) == 2):
+                        door_setting.sensor_type = 'Нормально - закрытая'
+                    door_setting.save()
+                # ------------------------------------------------------------------------------
+            messages.success(request, 'Успешно добавлено!')
+            return HttpResponseRedirect('/device_list')
+        except ZKSDKError as err:
+            print(err)
+            messages.error(request, 'Ошибка соединения')
+        except Exception as err:
+            print(err)
+            messages.error(request, 'Возникла ошибка') 
+    return render(request, 'skud/views/add_device.html')
+
+def edit_device(request, id):
+    if request.method == 'POST':
+        try:
+            device = Devices.objects.get(id=id)
+            door = Door_setting.objects.filter(device_name=device.device_name)
+            
+            for counts in range(0, len(door)):
+                door[counts].device_name = request.POST['device_name']
+                door[counts].save()
+            live = LiveStream(ip=request.POST['device_ip'])
+            live.door4todoor2({'Door4ToDoor2':request.POST['todoor']})
+
+            device.device_name = request.POST['device_name']
+            device.save()
+            messages.success(request, 'Успешно изменено') 
+        except Exception as err:
+            print(err)
+            messages.error(request, 'Девайс не найден') 
+        return HttpResponseRedirect('/device_list')
+    data = {
+        'device' : Devices.objects.get(id=id)
+    }
+    return render(request, 'skud/views/add_device.html', context=data)
+
+def delete_device(request, device_ip):
+    try:
+        if (Devices.objects.get(device_ip=device_ip)):
+            dev_name = Devices.objects.get(device_ip=device_ip).device_name
+            device = get_object_or_404(Devices, device_ip=device_ip).delete()
+            door_setting = Door_setting.objects.filter(device_name=dev_name).delete()
+    except Exception as err:
+        print(err)
+        messages.error(request, 'Не удалось удалить') 
+    return HttpResponseRedirect('/device_list')
+
+
+
+def current_time(request, id):
+    data = dict()
+    try:
+        device = Devices.objects.get(id=id)
+        connstr = f'protocol=TCP,ipaddress={device.device_ip},port={device.device_port},timeout=4000,passwd='
+        with ZKAccess(connstr=connstr) as zk:
+            zk.parameters.datetime = datetime.now()
+            message_time = 'Время установлено'
+        data['message'] = message_time
+    except Exception as err:
+        print(err)
+        message_time = 'Не удалось установить время'
+        data['message'] = message_time
+        
+    return JsonResponse(data)
+#---------------------------------------------------------------------
+
+
 #Доступ-----------------------------------------------------------------------------------
 def access_control(request):
     return render(request, 'skud/views/access_control.html', {'access_control':Access_control.objects.all()})
@@ -514,14 +670,13 @@ def access_delete(request,access_name):
         print(access_id)
         access_id.delete()
         access.delete()
-
+        messages.success(request, 'Успешно удалено')
         return  HttpResponseRedirect('/access_control')
     except Exception as err:
-        return  HttpResponse('Невозможно удалить так как у пользователя есть данный доступ')
+        messages.error(request, 'Невозможно удалить так как у пользователя есть данный доступ')
 
 def access_create(request):
     form = CreateAccess(request.POST)
-    
     if request.method == 'POST':
         try:
             if form.is_valid():
@@ -797,8 +952,8 @@ class LiveStream():
         return tables
         
 
-global live
-live = {}
+
+
 
 def monitoring(request):
     return render(request, 'skud/views/monitoring.html', {'device': Devices.objects.all()})
@@ -806,8 +961,7 @@ def monitoring(request):
 
 def monitoring_js(request, ip):
     data = dict()
-    live['monitoring'] = LiveStream(ip)
-    data['real'] = live['monitoring'].live_mode()
+    data['real'] = LiveStream(ip).live_mode()
     context = {'dates': data['real']}
     return JsonResponse(data)
 # ---------------------------------------------------------------------------------------
@@ -815,116 +969,80 @@ def monitoring_js(request, ip):
 
 # Отчет ------------------------------------------------------------------------------------------
 def reports_list(request):
+    if request.method == 'GET':
+        return render(request, 'skud/views/reports/report.html') 
     if request.method == 'POST':
         reports = AllReports(datetime.strptime(request.POST['start_time'], "%Y-%m-%d").date(), datetime.strptime(request.POST['end_time'], "%Y-%m-%d").date())
+        user_list = []
+        context = {'reports': user_list, 
+                'to_filter': request.POST['filter'], 
+                'to_department': int(request.POST['department']), 
+                'to_start_time': request.POST['start_time'], 
+                'to_end_time': request.POST['end_time'],
+                }
+        if request.POST['department'] != '0':  
+            users_all = User_list.objects.filter(department=request.POST['department'])
+        else:
+            users_all = User_list.objects.all()
+
         if request.POST['filter'] == '5':
             # Протокол проходов
             if request.POST['department'] != '0':
                 return render(request, 'skud/views/reports/filter/all_reports.html', 
-                {'main_report': Main_report.objects.filter(data__range=[request.POST['start_time'],request.POST['end_time']], user__department=request.POST['department']), 
-                'time_now': datetime.now().strftime ("%Y-%m-%d"), 'department': Department.objects.all()})
-
-            return render(request, 'skud/views/reports/filter/all_reports.html', 
-            {'main_report': Main_report.objects.filter(data__range=[request.POST['start_time'],request.POST['end_time']]), 
-            'time_now': datetime.now().strftime ("%Y-%m-%d"), 'department': Department.objects.all()})
+                {'main_report': Main_report.objects.filter(data__range=[request.POST['start_time'],request.POST['end_time']], user__department=request.POST['department']),
+                'reports': user_list, 
+                'to_filter': request.POST['filter'], 
+                'to_department': int(request.POST['department']), 
+                'to_start_time': request.POST['start_time'], 
+                'to_end_time': request.POST['end_time'],})
+            else:
+                return render(request, 'skud/views/reports/filter/all_reports.html', 
+                {'main_report': Main_report.objects.filter(data__range=[request.POST['start_time'],request.POST['end_time']]),
+                'reports': user_list, 
+                'to_filter': request.POST['filter'], 
+                'to_department': int(request.POST['department']), 
+                'to_start_time': request.POST['start_time'], 
+                'to_end_time': request.POST['end_time'],})
 
         if request.POST['filter'] == '2':
             # Список опоздавших
-            user_list = []
-
-            if request.POST['department'] != '0':
-                for user in User_list.objects.filter(department=request.POST['department']):
-                    if user.grafik:
-                        if reports.start(request.POST['filter'], user):
-                            user_list += reports.start(request.POST['filter'], user)
-                return render(request, 'skud/views/reports/filter/latecomers.html',
-                            {'latecomers': user_list, 'department': Department.objects.all(),'time_now': datetime.now().strftime ("%Y-%m-%d")})
-
-            for user in User_list.objects.all():
+            for user in users_all:
                 if user.grafik:
                     if reports.start(request.POST['filter'], user):
                         user_list += reports.start(request.POST['filter'], user)
-            return render(request, 'skud/views/reports/filter/latecomers.html',
-                        {'latecomers': user_list, 'department': Department.objects.all(),'time_now': datetime.now().strftime ("%Y-%m-%d")})
+            return render(request, 'skud/views/reports/filter/latecomers.html', context)
 
         if request.POST['filter'] == '3':
             # Ранний уход
-            user_list = []
-
-            if request.POST['department'] != '0':
-                for user in User_list.objects.filter(department=request.POST['department']):
-                    if user.grafik:
-                        if reports.start(request.POST['filter'], user):
-                            user_list += reports.start(request.POST['filter'], user)
-                return render(request, 'skud/views/reports/filter/earlyCare.html',
-                            {'earlyCare':user_list, 'department': Department.objects.all(),'time_now': datetime.now().strftime ("%Y-%m-%d")})
-
-            for user in User_list.objects.all():
+            for user in users_all:
                 if user.grafik:
                     if reports.start(request.POST['filter'], user):
                         user_list += reports.start(request.POST['filter'], user)
-            return render(request, 'skud/views/reports/filter/earlyCare.html',
-                            {'earlyCare':user_list, 'department': Department.objects.all(),'time_now': datetime.now().strftime ("%Y-%m-%d")})
+            return render(request, 'skud/views/reports/filter/earlyCare.html', context)
 
         if request.POST['filter'] == '4':
             # Отсутствующие
-            user_list = []
-
-            if request.POST['department'] != '0':
-                for user in User_list.objects.filter(department=request.POST['department']):
-                    if user.grafik:
-                        if reports.start(request.POST['filter'], user):
-                            user_list += reports.start(request.POST['filter'], user)
-                return render(request, 'skud/views/reports/filter/missing.html',
-                            {'missing':user_list, 'department': Department.objects.all(),'time_now': datetime.now().strftime ("%Y-%m-%d")})
-
-            for user in User_list.objects.all():
+            for user in users_all:
                 if user.grafik:
                     if reports.start(request.POST['filter'], user):
                         user_list += reports.start(request.POST['filter'], user)
-            return render(request, 'skud/views/reports/filter/missing.html',
-                            {'missing':user_list, 'department': Department.objects.all(), 'time_now': datetime.now().strftime ("%Y-%m-%d")})
+            return render(request, 'skud/views/reports/filter/missing.html', context)
 
         if request.POST['filter'] == '1':
             # График сотрудников
-            user_list = []
-
-            if request.POST['department'] != '0':
-                for user in User_list.objects.filter(department=request.POST['department']):
-                    if user.grafik:
-                        if reports.start(request.POST['filter'], user):
-                            user_list += reports.start(request.POST['filter'], user)
-                return render(request, 'skud/views/reports/filter/employee_schedule.html',
-                            {'employee_schedule':user_list, 'department': Department.objects.all(),'time_now': datetime.now().strftime ("%Y-%m-%d")})
-
-            for user in User_list.objects.all():
+            for user in users_all:
                 if user.grafik:
                     if reports.start(request.POST['filter'], user):
                         user_list += reports.start(request.POST['filter'], user)
-            return render(request, 'skud/views/reports/filter/employee_schedule.html',
-                            {'employee_schedule':user_list, 'department': Department.objects.all(), 'time_now': datetime.now().strftime ("%Y-%m-%d")})
+            return render(request, 'skud/views/reports/filter/employee_schedule.html', context)
 
         if request.POST['filter'] == '6':
-            # Отсутствующие
-            user_list = []
-
-            if request.POST['department'] != '0':
-                for user in User_list.objects.filter(department=request.POST['department']):
-                    if user.grafik:
-                        if reports.start(request.POST['filter'], user):
-                            user_list += reports.start(request.POST['filter'], user)
-                return render(request, 'skud/views/reports/filter/work_time.html',
-                            {'work_time':user_list, 'department': Department.objects.all(),'time_now': datetime.now().strftime ("%Y-%m-%d")})
-
-            for user in User_list.objects.all():
+            # Часов работал
+            for user in users_all:
                 if user.grafik:
                     if reports.start(request.POST['filter'], user):
                         user_list += reports.start(request.POST['filter'], user)
-            return render(request, 'skud/views/reports/filter/work_time.html',
-                            {'work_time':user_list, 'department': Department.objects.all(), 'time_now': datetime.now().strftime ("%Y-%m-%d")})
-            
-
-    return render(request, 'skud/views/reports/report.html', {'time_now': datetime.now().strftime ("%Y-%m-%d"), 'department': Department.objects.all()})
+            return render(request, 'skud/views/reports/filter/work_time.html', context)
 
 def refresh_report(request):
     query = Devices.objects.all()
@@ -949,25 +1067,43 @@ def smena(request):
 
 def grafik(request):
     if request.method == 'POST':
-        grafik = Grafik()
-        grafik.number = request.POST['start_time']
-        grafik.grafik_name = request.POST['grafik_name']
-        smena_data = []
-        for number in range(1,int(request.POST['start_time'])+1):
-            smena_data.append(request.POST[f'filter_{number}'])
-        grafik.smena = smena_data
-        print(smena_data)
-        grafik.save()
+        try:
+            grafik = Grafik.objects.get(id=request.POST['grafik_id'])
+            grafik.number = request.POST['start_time']
+            grafik.grafik_name = request.POST['grafik_name']
+            smena_data = ''
+            for number in range(0,int(request.POST['start_time'])):
+                if smena_data == '':
+                    smena_data += request.POST[f'filter_{number}']
+                else:
+                    smena_data += ',' + request.POST[f'filter_{number}']
+            grafik.smena = smena_data 
+            grafik.save()
+        except Exception as err:
+            print(err)
+            grafik = Grafik()
+            grafik.number = request.POST['start_time']
+            grafik.grafik_name = request.POST['grafik_name']
+            smena_data = ''
+            for number in range(0,int(request.POST['start_time'])):
+                if smena_data == '':
+                    smena_data += request.POST[f'filter_{number}']
+                else:
+                    smena_data += ',' + request.POST[f'filter_{number}'] 
+            grafik.smena = smena_data
+            grafik.save()
         return HttpResponseRedirect('/reports/grafik')
     return render(request, 'skud/views/reports/grafik.html', {'smena': Smena.objects.all(),
                                                             'grafik': Grafik.objects.all()})
 
 def new_grafik(request):
-    # data = dict()
+    data = dict()
     smena_name = list(Smena.objects.all().values('smena_name','id'))
     smena_data = list(Smena.objects.all().values_list('smena_name','start_time','end_time','start_break', 'end_break', 'id'))
+    grafik = list(Grafik.objects.all().values('id','number', 'grafik_name', 'smena'))
     return JsonResponse({'smena': smena_name,
                         'smena_data': smena_data,
+                        'grafik': grafik,
     })
 
 def user_grafik(request):
@@ -987,8 +1123,17 @@ def user_grafik(request):
                     'users': User_list.objects.all(),
                     })
 
+def grafik_delete(request, id):
+    try:
+        device = get_object_or_404(Grafik, id=id).delete()
+    except Exception as err:
+        print(err)
+        messages.error(request, 'Не удалось удалить') 
+    return HttpResponseRedirect('/reports/grafik')
+
 def getUsers_id(request, id):
     data = list(User_list.objects.filter(Q(department__id=id) | Q(department__parent_id=id)).values_list('surname','name', 'user_id'))
+    print(data)
     return JsonResponse({'graf':data})
 
 
@@ -1143,7 +1288,7 @@ class AllReports():
                         if report.in_out_state == 'Вход':
                             if report.check_time > shift.start_time:
                                 enter_time = report.check_time
-                            else:
+                            else: 
                                 enter_time = shift.start_time
                         elif report.in_out_state == 'Выход':
                             exit_time = report.check_time
@@ -1152,7 +1297,7 @@ class AllReports():
                                 total_time += report_time
                                 enter_time = ''
                                 exit_time = '' 
-                    return {'user': user, 'total_time':total_time} 
+                    return {'user': user, 'total_time':total_time, 'delta': delta} 
 
 
 

@@ -33,8 +33,9 @@
       </tr>
     </thead>
 
-    {% for device in devices %}
+    
         <tbody>
+          {% for device in devices %}
           <tr>
             <td>{{forloop.counter}}</td>
             <td>{{device.device_name}}</td>
@@ -49,8 +50,9 @@
             <a href="/delete_device/{{device.device_ip}}"><i class="btn-lg bi bi-trash btn-outline-secondary" title="Удалить устройство"></i></a>
             </td>
           </tr>
+          {% endfor %}
         </tbody>
-    {% endfor %}
+    
 </table>
 {% endblock %}
 

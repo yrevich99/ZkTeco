@@ -1,5 +1,5 @@
 {% extends 'skud/base.html' %}
-
+{% load quantum_tags %}
 {% block title %}
     Отчет
 {% endblock %}
@@ -30,26 +30,28 @@
             <a href="/reports/refresh"><i class="btn btn-success bi bi-arrow-clockwise " title="Обновить"></i></a>
         </div>
         <div class="col">
-            <select class="form-select" name="filter" required>
+            <select class="form-select" name="filter" id="filter" required>
                 <option  disabled>Выберите фильтр отчета</option>
-                <option value="5" selected>Протокол проходов</option>
-                <option value="1">График сотрудников</option>
-                <option value="2">Список опоздавших</option>
-                <option value="3">Ранний уход</option>
-                <option value="4">Отсутвующие</option>
-                <option value="6">Часов работал</option>
+                <option value="5" {% if to_filter == '5' %}selected{% endif %}>Протокол проходов</option>
+                <option value="1" {% if to_filter == '1' %}selected{% endif %}>График сотрудников</option>
+                <option value="2" {% if to_filter == '2' %}selected{% endif %}>Список опоздавших</option>
+                <option value="3" {% if to_filter == '3' %}selected{% endif %}>Ранний уход</option>
+                <option value="4" {% if to_filter == '4' %}selected{% endif %}>Отсутвующие</option>
+                <option value="6" {% if to_filter == '6' %}selected{% endif %}>Часов работал</option>
             </select>
         </div>
         <div class="col">
             <select class="form-select" name="department" required>
-                <option value="0" selected>Выберите отдел</option>
+                <option value="0">Выберите отдел</option>
+                {% departments as department %}
                 {% for item in department %}
-                <option value="{{item.id}}">{{item.name}}</option>
+                <option value="{{item.id}}" {% if to_department == item.id %}selected{% endif %}>{{item.name}}</option>
                 {% endfor %}
             </select>
         </div>
-        <div class="col">
+        <div class="col" id="buttonExel">
             <button type="submit" class="btn btn-primary" value='Save'>Показать</button>
+            <!-- <a href="#" onclick="exportTableToExcel()" class="btn btn-success ">Exel</a> -->
         </div>
     </div>
 
@@ -57,34 +59,36 @@
         <div class="col">         
             <div class="input-group">
                 <div class="input-group-text">Начало</div>
-                <input type="date" class="form-control" name="start_time" required value="{{ time_now }}">
+                <input type="date" class="form-control" name="start_time" required {% if to_start_time %} value="{{to_start_time}}" {% else %} value="{%current_time%}" {% endif %}>
             </div>
         </div>
         <div class="col">
             <div class="input-group">
                 <div class="input-group-text">Конец</div>
-                <input type="date" class="form-control" name="end_time" required value="{{ time_now }}">
+                <input type="date" class="form-control" name="end_time" required {% if to_end_time %} value="{{to_end_time}}" {% else %} value="{%current_time%}" {% endif %} >
             </div>
         </div>
     </div>
 </form>
+    <div class="row">
+        <div class="col"> 
     {% block 'protocol' %}
-    <table class="table table-bordered table-striped table-hover">
+    <table class="table table-bordered table-striped table-hover" id="exelTable">
         <thead>
             <tr>
-                <th scope="row">Номер сотрудника</th>
-                <th scope="col">Фамилия</th>
-                <th scope="col">Имя</th>
-                <th scope="col">Отдел</th>
-                <th scope="col">Номер карты</th>
-                <th scope="col">Дата</th>
-                <th scope="col">Время</th>
-                <th scope="col">Вход/Выход</th>
-                <th scope="col">Название двери</th>
+                <th>Номер сотрудника</th>
+                <th>Фамилия</th>
+                <th>Имя</th>
+                <th>Отдел</th>
+                <th>Номер карты</th>
+                <th>Дата</th>
+                <th>Время</th>
+                <th>Вход/Выход</th>
+                <th>Название двери</th>
             </tr>
         </thead>
         
-        <tbody>
+        <!-- <tbody>
             <tr>
                 <td><p></p></td>
                 <td> </td>
@@ -96,9 +100,11 @@
                 <td> </td>
                 <td> </td>
             </tr>
-        </tbody>
+        </tbody> -->
     </table>
     {% endblock %}
+        </div>
+    </div>
 
 {% endblock %}
     

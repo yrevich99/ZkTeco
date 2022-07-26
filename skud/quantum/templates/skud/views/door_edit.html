@@ -24,12 +24,20 @@
             <input type="number" name="inter_time" class="form-control" value="{{door.inter_time}}">
         </div>
         <div class="form-group">
-            <label ></label>
+            <label >Тип сенсора двери</label>
             <select class="form-select" name="sensor_type" required>
                 <option  disabled>Выберите статус двери</option>
-                <option value="Не указано" selected>Не указано</option>
-                <option value="Нормально-открытая" selected>Нормально-открытая</option>
-                <option value="Нормально-закрытая" selected>Нормально-закрытая</option>
+                <option value="0">Не указано</option>
+                <option value="1">Нормально-открытая</option>
+                <option value="2" selected>Нормально-закрытая</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Зона свободного прохода</label>
+            <select class="form-select" name="keep_open_time" required>
+                <option  disabled>Выберите статус двери</option>
+                <option value="0">--------</option>
+                <option value="1">Включено</option>
             </select>
         </div>
     </div>

@@ -26,8 +26,8 @@ from datetime import datetime
 # my_user.save()
 # get_rt
 
-zk = 'protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd='
-conn = ZKSDK('plcommpro.dll')
+# zk = 'protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd='
+# conn = ZKSDK('plcommpro.dll')
 
 # conn.connect(zk)
 # tables = conn.get_rt_log(256)
@@ -80,26 +80,26 @@ conn = ZKSDK('plcommpro.dll')
 # zk = 'protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd='
 # con = ZKAccess(zk)
 
-zk = 'protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd='
-conn = ZKSDK('plcommpro.dll')
+# zk = 'protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd='
+# conn = ZKSDK('plcommpro.dll')
 # txns = con.table('Transaction')
 # if txns.count() > 0:
 #     print('The first transaction:', txns[0])
 # else:
 #     print('Transaction table is empty!')
 # print(txns)
-table = conn.set_device_data('userauthorize')
-table.send(None)
-rec = User(card='123456', pin='123')
-print(rec.dict)
-records = {'Pin':'19999','AuthorizeTimezoneId':'1', 'AuthorizeDoorId':'7'}
+# table = conn.set_device_data('userauthorize')
+# table.send(None)
+# rec = User(card='123456', pin='123')
+# print(rec.dict)
+# records = {'Pin':'19999','AuthorizeTimezoneId':'1', 'AuthorizeDoorId':'7'}
 
-table.send(records)
-try:
-    table.send(None)
-except StopIteration:
-    pass
-conn.disconnect()
+# table.send(records)
+# try:
+#     table.send(None)
+# except StopIteration:
+#     pass
+# conn.disconnect()
 
 
 
@@ -230,3 +230,21 @@ conn.disconnect()
 # its = ['Door4ToDoor2']
 # print(connects.get_device_param(its,2048))
 # connects.disconnect()
+
+param = {'Door3KeepOpenTimeZone':'0'}
+conn = f"protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd="
+connects = ZKSDK('plcommpro.dll')
+connects.connect(conn)
+erwq = ['Door3KeepOpenTimeZone']
+# state = connects.control_device(4,p1=2,p2=0,p3=0,p4=0)
+todoor = connects.set_device_param(param)
+print(connects.get_device_param(erwq, 2048))
+connects.disconnect()
+# zk = ZKAccess(connstr=conn)
+# zk.doors[0].relays.switch_on(5)
+# $Door1CloseAndLock=1,Door1ForcePassWord=,Door1SupperPassWord=,Door1Detectortime=15,
+# Door1Drivertime=5,Door1Intertime=3,Door1KeepOpenTimeZone=1,Door1SensorType=2,Door1ValidTZ=1,Door1VerifyType=6,Reader1IOState=0
+# $Door3CloseAndLock=1,Door3ForcePassWord=,Door3SupperPassWord=,Door3Detectortime=15,Door3Drivertime=5,Door3Intertime=3,Door3KeepOpenTimeZone=1,Door3SensorType=0,Door3ValidTZ=1,Door3VerifyType=6,Reader1IOState=0
+
+
+# Door3KeepOpenTimeZone=0

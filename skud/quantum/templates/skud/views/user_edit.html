@@ -1,6 +1,6 @@
 {% extends 'skud/base.html' %}
 {% load static %}
-
+{% load quantum_tags %}
 {% block title %}
     Новый сотрудник
 {% endblock %}
@@ -25,10 +25,16 @@
     <div class="overflow-hidden">
         <div class="row row-cols-auto">
             <div class="col" >
-                <img src="{% static 'images/user.png' %}" id="output" class="rounded float-left" alt="..." style="height: 200px; width: 200px;">
+                
+                {% if user.images %}
+                <img src="{{user.images}}" id="base64Img" class="rounded float-left" alt="..." style="height: 200px; width: 200px;">
+                {% else %}
+                <img src="{% static 'images/user.png' %}" id="base64Img" class="rounded float-left" alt="..." style="height: 200px; width: 200px;">
+                {% endif %}
                 <div class="input-group mt-1">
                     <label class="btn btn-primary" for="file">
-                        Выбрать изображение <input type="file" name="images" hidden id="file" onchange="loadFile(event)">
+                        Выбрать изображение <input  type="file" hidden id="file" onchange="encodeImgtoBase64(this)">
+                        <input id="base64Code" type="hidden" name="images" value="">
                     </label>
                 </div>
             </div>
@@ -79,12 +85,14 @@
                             <div class="p-3 border bg-light">
                                 <div class="list-group" id="table1">
                                     {% for access in access_levels %}
+                                    {% check_access user.user_id access.id as checks %}
+                                        {% if checks %}
                                             <label class="list-group-item" >
                                                 <input class="form-check-input mr-1" type="checkbox" name='access_list' value="{{access.id}}">
+                                                <input type="hidden" name="access_list" value="{{access.id}}">
                                                 {{access.access_name}}
                                             </label>
-                                    {% empty %}
-                                    <span class="input-group-text">Список пуст</span>
+                                        {% endif %}
                                     {% endfor %}
                                 </div>
                             </div>
@@ -107,15 +115,13 @@
                             <div class="p-3 border bg-light" >
                                 <div class="list-group" id="table2">
                                     {% for access in user_access %}
-                                    
                                     {% if access.access != null %}
                                         <label class="list-group-item" >
-                                            <input class="form-check-input mr-1" type="checkbox" name='access' value="{{access.access.id}}">
+                                            <input class="form-check-input mr-1" type="checkbox" name='access' value="{{access.access_id}}">
+                                            <input type="hidden" name="access" value="{{access.access_id}}">
                                             {{access.access.access_name}}
                                         </label>
                                     {% endif %}
-                                    {% empty %}
-                                    <span class="input-group-text">Список пуст</span>
                                     {% endfor %}
                                 </div>
                             </div>
@@ -132,9 +138,14 @@
 
 {% block scripts %}
     <script>
-        var loadFile = function(event) {
-        var image = document.getElementById('output');
-        image.src = URL.createObjectURL(event.target.files[0]);
-        };
+        function encodeImgtoBase64(element) {
+            var file = element.files[0];
+            var reader = new FileReader();
+            reader.onloadend = function() {
+                $("#base64Code").val(reader.result);
+                $("#base64Img").attr("src", reader.result);
+            }
+            reader.readAsDataURL(file);
+        }
     </script>
 {% endblock %}

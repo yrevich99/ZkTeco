@@ -25,7 +25,6 @@ $(function () {
         type: form.attr("method"),
         dataType: 'json',
         success: function () {
-            
             // $("#department-table ol").html(data.html_department_list);
             // console.log('data :>> ', data);
             $("#modal-door").modal("hide");

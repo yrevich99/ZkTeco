@@ -23,7 +23,8 @@ urlpatterns = [
     path('device_list/<int:id>/time', views.current_time, name='current_time'),
     path('door_settings', views.door_setting_list),
     path('door_settings/door_edit/<int:id>', views.door_edit, name='door_edit'),
-    
+    path('door_settings/<int:id>/<str:door_count>/<str:time>', views.door_state_control, name='door_state_control'),
+    # path('door_settings/<int:id>/<str:door_count>/<str:time>', views.door_state_control, name='door_state_control'),
     # -------------------------------------------------------------------------
 
 
@@ -54,6 +55,7 @@ urlpatterns = [
     path('reports/smena', views.smena),
     path('reports/grafik', views.grafik),
     path('reports/grafik/new', views.new_grafik),
+    path('reports/grafik/<int:id>/delete', views.grafik_delete),
     path('reports/user_grafik', views.user_grafik),
     path('reports/user_grafik/<int:id>', views.getUsers_id, name='getUsers_id'),
     # ---------------------------------------------------------------------------

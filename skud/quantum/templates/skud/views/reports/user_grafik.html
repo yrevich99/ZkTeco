@@ -88,28 +88,22 @@
 
         </tr>
     </thead>
-    
-    
 
-        
+    <tbody>
     {% for list in users %}
-    
         {% if  list.grafik %}
-            <tbody>
-                <tr>
-                    <td>{{list.user_id}}</td>
-                    <td>{{list.surname}}</td>
-                    <td>{{list.name}}</td>
-                    <td>{{list.department.name}}</td>
-                    <td>{{list.grafik.grafik_name}}</td>
-                    <td>{{list.start_time}}</td>
-                    <td>{{list.end_time}}</td>
-                </tr>
-            </tbody>
+            <tr>
+                <td>{{list.user_id}}</td>
+                <td>{{list.surname}}</td>
+                <td>{{list.name}}</td>
+                <td>{{list.department.name}}</td>
+                <td>{{list.grafik.grafik_name}}</td>
+                <td>{{list.start_time}}</td>
+                <td>{{list.end_time}}</td>
+            </tr>
         {% endif %}
-        
-        
     {% endfor %}
+    </tbody>
 </table>
 {% endblock content %}
     

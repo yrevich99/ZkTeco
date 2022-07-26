@@ -1,7 +1,7 @@
 {% extends 'skud/views/reports/report.html' %}
 
 {% block 'protocol' %}
-<table class="table table-bordered table-striped table-hover">
+<table class=" table table-bordered table-striped table-hover" id="exelTable">
     <thead>
         <tr>
             <th scope="row">Номер сотрудника</th>
@@ -16,8 +16,9 @@
         </tr>
     </thead>
     
-    {% for list in main_report %}
+    
         <tbody>
+        {% for list in main_report %}
             <tr>
                 <td>{{list.user.user_id}}</td>
                 <td>{{list.user.surname}}</td>
@@ -29,8 +30,9 @@
                 <td>{{list.in_out_state}}</td>
                 <td>{{list.door_name}}</td>
             </tr>
+        {% endfor %}
         </tbody>
-    {% endfor %}
+    
 </table>
 
 {% endblock %}

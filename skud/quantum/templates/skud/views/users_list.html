@@ -23,17 +23,17 @@
     <span class="glyphicon glyphicon-plus"></span>
     Добавить
     </a>
-    <a href='/users_list/user_create' type="button" class="btn btn-primary">
+    <!-- <a href='/users_list/user_create' type="button" class="btn btn-primary">
         <span class="glyphicon glyphicon-plus"></span>
         Фильтр по отделам
-    </a>
+    </a> -->
     <a href='/users_list/sinc' type="button" class="btn btn-primary">
         <span class="glyphicon glyphicon-plus"></span>
         Синхронизация
     </a>
 </p>
 
-<table class="table table-bordered table-striped table-hover ">
+<table class="table table-bordered table-striped table-hover " id="UsersTable">
     <thead>
         <tr>
             <th scope="row">Номер сотрудника</th>
@@ -42,26 +42,28 @@
             <th scope="col">Номер карты</th>
             <th scope="col">Отдел</th>
             <th scope="col">Доступ</th>
+            <th scope="col"></th>
         </tr>
     </thead>
 
-    {% for user in posts %}
+    
         <tbody>
+            {% for user in users %}
             <tr>
                 <td>{{user.user_id}}</td>
                 <td>{{user.surname}}</td>
                 <td>{{user.name}}</td>
                 <td>{{user.card_number}}</td>
-                <td>{{user.department.name}}
-                </td>
+                <td>{{user.department.name}}</td>
                 <td>{{user.access_id}}</td>
                 <td class="btn-lg ">
                 <a href="/user_list/edit/{{user.user_id}}"><i class="btn-lg bi bi-pencil-square btn-outline-secondary" title="Редактировать"></i></a>
                 <a href="/user_list/{{user.user_id}}/delete"><i class="btn-lg bi bi-trash btn-outline-secondary" title="Удалить"></i></a>
                 </td>
             </tr>
+            {% endfor %}
         </tbody>
-    {% endfor %}
+    
 </table>
-{% include "paginator.html" with page=posts %}
+<!-- {% include "paginator.html" with page=posts %} -->
 {% endblock %}

@@ -30,8 +30,9 @@
         </tr>
     </thead>
 
-    {% for access in access_control %}
+    
         <tbody>
+            {% for access in access_control %}
             <tr>
                 <td>{{access.access_name}}</td>
                 <td>{{access.lock_control}}</td>
@@ -41,7 +42,8 @@
                 <a href="access_control/{{access.access_name}}/delete"><i class="btn-lg bi bi-trash btn-outline-secondary" title="Удалить доступ"></i></a>
                 </td>
             </tr>
+            {% endfor %}
         </tbody>
-    {% endfor %}
+    
 </table>
 {% endblock %}

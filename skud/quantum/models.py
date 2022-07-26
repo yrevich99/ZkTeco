@@ -30,6 +30,7 @@ class Door_setting(models.Model):
     detector_time = models.IntegerField()
     inter_time = models.IntegerField()
     sensor_type = models.CharField(max_length=250)
+    keep_open_time = models.CharField(max_length=50)
 
 
 class Department(MPTTModel):
@@ -48,13 +49,13 @@ class Access_control(models.Model):
 
 class User_list(models.Model):
     user_id = models.IntegerField(unique=True)
-    images = models.BinaryField(blank=True)
+    images = models.TextField(blank=True)
     surname = models.CharField(max_length=150)
     name = models.CharField(max_length=150)
     department = models.ForeignKey(Department, on_delete=models.PROTECT)
     card_number = models.CharField(max_length=50, unique=True)
     access_id = models.CharField(max_length=150)
-    grafik = models.ForeignKey(Grafik, on_delete=models.CASCADE,blank=True, null=True)
+    grafik = models.ForeignKey(Grafik, on_delete=models.SET_NULL,blank=True, null=True)
     start_time = models.DateField(blank=True, null=True)
     end_time = models.DateField(blank=True, null=True)
 

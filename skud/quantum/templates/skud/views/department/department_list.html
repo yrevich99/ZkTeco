@@ -31,7 +31,6 @@
         {% recursetree department %}
             <li class="list-group-item">
                 {{ node.name }}
-                
                 <button type="button"
                     class="btn btn-danger btn-sm js-delete-department float-end"
                     data-url="{% url 'quantum:department_delete' node.id %}">

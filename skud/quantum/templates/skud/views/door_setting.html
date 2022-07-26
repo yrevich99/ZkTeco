@@ -29,11 +29,13 @@
         <th scope="col">Задержка статуса двери</th>
         <th scope="col">Интервал считывания</th>
         <th scope="col">Статус двери</th>
+        <th scope="col">Зона свободного прохода</th>
       </tr>
     </thead>
 
-    {% for door in doors %}
+    
         <tbody>
+          {% for door in doors %}
           <tr>
             <td>{{door.door_number}}</td>
             <td>{{door.name_door}}</td>
@@ -42,15 +44,17 @@
             <td>{{door.detector_time}}</td>
             <td>{{door.inter_time}}</td>
             <td>{{door.sensor_type}}</td>
+            <td>{{door.keep_open_time}}</td>
             <td class="btn-lg ">
               
             <a href="#" class="js_door_setting" data-url="{% url 'quantum:door_edit' door.id %}"><i class="btn-lg bi bi-pencil-square btn-outline-secondary" title="Редактировать"></i></a>
-            <a href="#"><i class="btn-lg bi bi-door-open btn-outline-secondary" title="Открыть дверь"></i></a>
-            <a href="#"><i class="btn-lg bi bi-door-closed btn-outline-secondary" title="Закрыть дверь"></i></a>
+            <a href="/door_settings/{{door.id}}/{{door.door_number}}/255"><i class="btn-lg bi bi-door-open btn-outline-secondary" title="Открыть дверь"></i></a>
+            <a href="/door_settings/{{door.id}}/{{door.door_number}}/0"><i class="btn-lg bi bi-door-closed btn-outline-secondary" title="Закрыть дверь"></i></a>
             </td>
           </tr>
+          {% endfor %}
         </tbody>
-    {% endfor %}
+    
 </table>
 
 <div class="modal fade" id="modal-door">
@@ -60,6 +64,7 @@
   </div>
 </div>
 {% endblock %}
+
 
 
 

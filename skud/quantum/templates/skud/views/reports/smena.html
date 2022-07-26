@@ -78,8 +78,9 @@
         </tr>
     </thead>
     
-    {% for list in smena %}
+    
         <tbody>
+            {% for list in smena %}
             <tr>
                 <td>{{list.smena_name}}</td>
                 <td>{{list.start_time}}</td>
@@ -87,7 +88,8 @@
                 <td>{{list.start_break}}</td>
                 <td>{{list.end_break}}</td>
             </tr>
+            {% endfor %}
         </tbody>
-    {% endfor %}
+    
 </table>
 {% endblock %}

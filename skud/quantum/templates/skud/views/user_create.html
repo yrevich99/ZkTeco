@@ -25,10 +25,11 @@
     <div class="overflow-hidden">
         <div class="row row-cols-auto">
             <div class="col" >
-                <img src="{% static 'images/user.png' %}" id="output" class="rounded float-left" alt="..." style="height: 200px; width: 200px;">
+                <img src="{% static 'images/user.png' %}" id="base64Img" class="rounded float-left" alt="..." style="height: 200px; width: 200px;">
                 <div class="input-group mt-1">
                     <label class="btn btn-primary" for="file">
-                        Выбрать изображение <input type="file" name="images" hidden id="file" onchange="loadFile(event)">
+                        Выбрать изображение <input  type="file" hidden id="file" onchange="encodeImgtoBase64(this)">
+                        <input id="base64Code" type="hidden" name="images" value="">
                     </label>
                 </div>
             </div>
@@ -76,6 +77,7 @@
                                     {% for access in access_levels %}
                                     <label class="list-group-item" >
                                         <input class="form-check-input mr-1" type="checkbox" name='access_list' value="{{access.id}}">
+                                        <input type="hidden" name="access_list" value="{{access.id}}">
                                         {{access.access_name}}
                                     </label>
                                     {% empty %}
@@ -115,9 +117,21 @@
 
 {% block scripts %}
     <script>
-        var loadFile = function(event) {
-        var image = document.getElementById('output');
-        image.src = URL.createObjectURL(event.target.files[0]);
-        };
+        // var loadFile = function(event) {
+        // var image = document.getElementById('output');
+        // image.src = URL.createObjectURL(event.target.files[0]);
+        // var in_image = document.getElementById('inImage');
+        // in_image.value = image.src;
+        // console.log(in_image);
+        // };
+        function encodeImgtoBase64(element) {
+        var file = element.files[0];
+        var reader = new FileReader();
+        reader.onloadend = function() {
+            $("#base64Code").val(reader.result);
+            $("#base64Img").attr("src", reader.result);
+        }
+        reader.readAsDataURL(file);
+    }
     </script>
 {% endblock %}
