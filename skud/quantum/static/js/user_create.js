@@ -9,7 +9,6 @@ jQuery(document).ready(function($){
             $('#table2').append( $(this).parent());
             $(this).attr('name', 'access');
             $(this).siblings('input').attr('name', 'access');
-            console.log(values);
         });
     });
 
@@ -20,7 +19,6 @@ jQuery(document).ready(function($){
             $('#table1').append( $(this).parent());
             $(this).attr('name', 'access_list');
             $(this).siblings('input').attr('name', 'access_list');
-            console.log(values);
         });
     });
 });

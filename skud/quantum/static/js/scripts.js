@@ -125,3 +125,6 @@ alertList.forEach(function (alert) {
     new bootstrap.Alert(alert)
 })
 
+
+
+

@@ -42,6 +42,7 @@
                         <label class="list-group-item" >
                             <input class="form-check-input mr-1" type="checkbox" id="{{door.name_door}}" name='first_table' value="{{door.device_ip}}|||{{door.door_number}}">
                             {{door.name_door}}|{{door.device_name}}
+                            <input type="hidden" name="first_table" value="{{door.device_ip}}|||{{door.door_number}}">
                         </label>
                         {% endfor %}
                     </div>

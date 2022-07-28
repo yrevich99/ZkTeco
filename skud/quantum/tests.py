@@ -9,6 +9,7 @@ from ctypes import *
 from threading import *
 import itertools
 from datetime import datetime
+from django.views.decorators.http import require_http_methods
 # from models import Device
 # Create your views here.
 # from .models import Department
@@ -231,15 +232,15 @@ from datetime import datetime
 # print(connects.get_device_param(its,2048))
 # connects.disconnect()
 
-param = {'Door3KeepOpenTimeZone':'0'}
-conn = f"protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd="
-connects = ZKSDK('plcommpro.dll')
-connects.connect(conn)
-erwq = ['Door3KeepOpenTimeZone']
+# param = {'Door3KeepOpenTimeZone':'0'}
+# conn = f"protocol=TCP,ipaddress=192.168.1.203,port=4370,timeout=4000,passwd="
+# connects = ZKSDK('plcommpro.dll')
+# connects.connect(conn)
+# erwq = ['Door3KeepOpenTimeZone']
 # state = connects.control_device(4,p1=2,p2=0,p3=0,p4=0)
-todoor = connects.set_device_param(param)
-print(connects.get_device_param(erwq, 2048))
-connects.disconnect()
+# todoor = connects.set_device_param(param)
+# print(connects.get_device_param(erwq, 2048))
+# connects.disconnect()
 # zk = ZKAccess(connstr=conn)
 # zk.doors[0].relays.switch_on(5)
 # $Door1CloseAndLock=1,Door1ForcePassWord=,Door1SupperPassWord=,Door1Detectortime=15,
@@ -248,3 +249,8 @@ connects.disconnect()
 
 
 # Door3KeepOpenTimeZone=0
+
+connstr = f"protocol=TCP,ipaddress=192.168.1.202,port=4370,timeout=4000,passwd="
+while True:
+    with ZKAccess(connstr=connstr) as zk:
+        print(zk.events.poll())

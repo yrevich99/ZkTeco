@@ -409,14 +409,18 @@ def door_edit(request, id):
 def door_state_control(request,id,door_count, time):
     door = Door_setting.objects.get(id=id)
     try:
-        # state = DeviceSetting().open_close_door(door.device_ip,'4370',door_count, time)
-        connstr = f"protocol=TCP,ipaddress={door.device_ip},port=4370,timeout=4000,passwd="
-        with ZKAccess(connstr=connstr) as zk:
-            zk.doors[0].relays.switch_on(5)
+        
+        
+        # connstr = f"protocol=TCP,ipaddress={door.device_ip},port=4370,timeout=4000,passwd="
+        # with ZKAccess(connstr=connstr) as zk:
+        #     zk.doors[0].relays.switch_on(5)
         if time == '255':
             message_time = f'Дверь {door.name_door} открыта'
+            state_status = 'open'
         elif time == '0':
             message_time = f'Дверь {door.name_door} закрыта'
+            state_status = 'close'
+        state = DeviceSetting().open_close_door(door.device_ip,'4370',door_count, time, state_status)
         messages.success(request, message_time)
     except Exception as err:
         print(err)
@@ -456,11 +460,16 @@ class DeviceSetting():
         door_get = connects.set_device_param(parametrs)
         connects.disconnect()
 
-    def open_close_door(self,ip,port,door_count,time):
+    def open_close_door(self,ip,port,door_count,time, state_status):
         conn = f"protocol=TCP,ipaddress={ip},port={port},timeout=4000,passwd="
         connects = ZKSDK('plcommpro.dll')
         connects.connect(conn)
-        state = connects.control_device(1,door_count,1,time,0)
+        door_count = int(door_count)
+        time = int(time)
+        if state_status == 'open':
+            state = connects.control_device(1,door_count,1,time,0)
+        elif state_status == 'close':
+            state = connects.control_device(4,door_count,0,0,0)
         connects.disconnect()
 
 
@@ -680,7 +689,7 @@ def access_create(request):
     if request.method == 'POST':
         try:
             if form.is_valid():
-                lock_list = request.POST.getlist('lock_control')
+                lock_list = set(request.POST.getlist('lock_control'))
                 lock_dict = {}
                 strings = ''
                 access = Access_control()
